@@ -9,13 +9,22 @@ export const findUserById = async (id) => {
   }
 };
 
-export const findAllUsers = async () => {
-  try {
-    return await User.find();
-  } catch (error) {
-    throw new Error("Error fetching users");
-  }
+export const findUserByMobile = async (mobile) => {
+  const user = await User.findOne({ mobile });
+  return user;
 };
+
+export const findAllUsers = async (req, res) => {
+    try {
+        const users = await findAllUsers();
+        console.log(users)
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching users' });
+    }
+};
+
+
 
 export const GenerateToken = (user) => {
   return jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });

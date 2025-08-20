@@ -5,7 +5,7 @@ const buttons = [
   { label: '💰 Add Money', to: '/add-money' },
   { label: '💸 Withdraw', to: '/withdraw' },
   { label: '📩 Place a bet', to: '/place-bet' },
-  { label: '🟢 History', to: '/history' },
+  { label: '🟢 Game Rates', to: '/game-rates' },
 ];
 
 function AddTab() {

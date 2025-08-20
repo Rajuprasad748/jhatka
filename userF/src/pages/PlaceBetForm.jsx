@@ -1,10 +1,10 @@
 import React from 'react'
-import APlaceBetFrom from '../components/APlaceBetFrom'
+import APlaceBetForm from '../components/APlaceBetForm'
 
 const PlaceBetForm = () => {
   return (
     <div>
-      <APlaceBetFrom />
+      <APlaceBetForm />
     </div>
   )
 }

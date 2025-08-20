@@ -10,6 +10,7 @@ import AddMoney from "./pages/AddMoney";
 import WithdrawAmount from "./pages/WithdrawAmount";
 import PlaceBetForm from "./pages/PlaceBetForm";
 import History from "./pages/History";
+import GameRates from "./components/GameRates";
 
 function App() {
   return (
@@ -39,6 +40,8 @@ function App() {
           <Route path="/withdraw" element={<WithdrawAmount />} />
           <Route path="/place-bet" element={<PlaceBetForm />} />
           <Route path="/history" element={<History />} />
+          <Route path="/game-rates" element={<GameRates />} />
+          <Route path="/game/:name" element={<PlaceBetForm />} />
         </Routes>
       </div>
     </>
