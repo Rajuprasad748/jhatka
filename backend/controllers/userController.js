@@ -15,7 +15,9 @@ export const registerUser = async (req, res) => {
     // Check if user already exists
     const userExists = await findUserByMobile(mobile);
     if (userExists) {
-      return res.status(400).json({ message: "User already exists with this mobile number" });
+      return res
+        .status(400)
+        .json({ message: "User already exists with this mobile number" });
     }
 
     // Hash password
@@ -34,7 +36,12 @@ export const registerUser = async (req, res) => {
 
     res.json({
       token,
-      user: { id: user._id, name: user.name, email: user.email, mobile: user.mobile },
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile,
+      },
     });
   } catch (error) {
     console.error("Error in registerUser:", error.message);
@@ -42,10 +49,8 @@ export const registerUser = async (req, res) => {
   }
 };
 
-
 export const loginUser = async (req, res) => {
   try {
-    
     const { mobile, password } = req.body;
 
     // Find user by mobile
@@ -54,32 +59,28 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ message: "Invalid mobile or password" });
     }
     // Verify password (assuming you hashed it with bcrypt)
-    console.log("rrr");
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid mobile or password" });
     }
-    
 
     // Generate JWT
     const token = GenerateToken(user);
-    console.log("Generated token:", token);
     if (!token) {
       return res.status(500).json({ message: "Token generation failed" });
     }
 
     // Store token in cookie
     res.cookie("token", token, {
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === "production", 
-      sameSite: "strict", 
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production" ? true : false,
+      sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    console.log("stored cookie")
-
     res.status(200).json({
       message: "Login successful",
+      token,
       user: {
         id: user._id,
         name: user.name,
@@ -91,19 +92,15 @@ export const loginUser = async (req, res) => {
   }
 };
 
-export const logoutUser = async (req, res) => {
-  try {
-    // Clear cookie
-     res.cookie("token", "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      expires: new Date(0),
-    });
-    res.status(200).json({
-      message: "Logout successful",
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
+export const logoutUser = (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+      secure: process.env.NODE_ENV === "production" ? true : false,
+      sameSite: "lax",
+  });
+  res.json({ message: "Logged out successfully" });
+};
+
+export const verifyUser = (req, res) => {
+  res.json({ isLoggedIn: true, user: req.user });
 };

@@ -11,10 +11,24 @@ dotenv.config();
 connectDB();
 
 const app = express();
-app.use(cors({
-  origin: "http://localhost:5173", // your frontend
-  credentials: true, // ✅ allow cookies
-}));
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174"
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // allow cookies
+  })
+);
 
 app.use(express.urlencoded({ extended: true }));
 // Middleware to parse JSON bodies 

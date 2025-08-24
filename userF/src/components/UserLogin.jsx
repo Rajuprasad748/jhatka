@@ -1,7 +1,8 @@
+// UserLogin.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from "react-toastify";
+import { useAuth } from "../context/useAuth"; // ✅ use context
 
 const UserLogin = () => {
   const [mobile, setMobile] = useState("");
@@ -9,27 +10,21 @@ const UserLogin = () => {
   const [error, setError] = useState(null);
 
   const navigate = useNavigate();
+  const { login } = useAuth(); // ✅ get login from context
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/users/login`,
-        {
-          mobile,
-          password,
-        },{ withCredentials: true }
-      );
+      // ✅ Call context login (this updates AuthProvider state)
+      await login({ mobile, password });
 
-      // Success → clear fields + navigate
       setMobile("");
       setPassword("");
       toast.success("Logged in successfully!");
-      console.log("Login successful:", response.data);
 
+      // redirect after login
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
@@ -51,25 +46,16 @@ const UserLogin = () => {
               Mobile
             </label>
             <div className="flex items-center border border-gray-300 rounded-lg px-3 h-12 focus-within:border-blue-500 transition-all">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5 text-gray-500"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm5 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" />
-              </svg>
               <input
                 type="tel"
                 placeholder="Enter your Mobile Number"
                 className="ml-2 w-full h-full border-none outline-none bg-transparent text-base"
                 value={mobile}
                 onChange={(e) => {
-                  // Only allow digits
                   const onlyNums = e.target.value.replace(/\D/g, "");
                   setMobile(onlyNums);
                 }}
-                maxLength={10} // optional: restrict to 10 digits
+                maxLength={10}
                 required
               />
             </div>
@@ -81,15 +67,6 @@ const UserLogin = () => {
               Password
             </label>
             <div className="flex items-center border border-gray-300 rounded-lg px-3 h-12 focus-within:border-blue-500 transition-all">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5 text-gray-500"
-                viewBox="-64 0 512 512"
-                fill="currentColor"
-              >
-                <path d="m336 512h-288c-26.453125 0-48-21.523438-48-48v-224c0-26.476562 21.546875-48 48-48h288c26.453125 0 48 21.523438 48 48v224c0 26.476562-21.546875 48-48 48zm-288-288c-8.8125 0-16 7.167969-16 16v224c0 8.832031 7.1875 16 16 16h288c8.8125 0 16-7.167969 16-16v-224c0-8.832031-7.1875-16-16-16zm0 0" />
-                <path d="m304 224c-8.832031 0-16-7.167969-16-16v-80c0-52.929688-43.070312-96-96-96s-96 43.070312-96 96v80c0 8.832031-7.167969 16-16 16s-16-7.167969-16-16v-80c0-70.59375 57.40625-128 128-128s128 57.40625 128 128v80c0 8.832031-7.167969 16-16 16zm0 0" />
-              </svg>
               <input
                 type="password"
                 placeholder="Enter your Password"
