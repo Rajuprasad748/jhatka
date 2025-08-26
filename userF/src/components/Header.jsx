@@ -43,7 +43,7 @@ function Header() {
           <div className="flex items-center gap-4 text-sm sm:gap-6 sm:text-base">
             {!loading && user && (
               <span className="flex items-center gap-1 hover:text-gray-300 text-sm sm:text-base">
-                <FaWallet className="text-lg" />₹ {user.walletBalance ?? 0}
+                <FaWallet className="text-lg" /> {user.walletBalance}
               </span>
             )}
 

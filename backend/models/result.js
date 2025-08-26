@@ -1,23 +1,11 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const resultSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true
-  },
-  number: {
-    type: String,
-    required: true,
-    match: /^\d{8}$/, // Enforces exactly 8 digits
-  },
-  date: {
-    type: Date,
-    required: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  gameId: { type: mongoose.Schema.Types.ObjectId, ref: "Game", required: true },
+  type: { type: String, enum: ["open", "close"], required: true }, // 👈 open or close
+  value: { type: String, required: true }, // actual result value
+  scheduledTime: { type: Date, required: true }, // when to publish
+  published: { type: Boolean, default: false }, // flag if result is visible
 });
 
-export default mongoose.model('Result', resultSchema);
+export default mongoose.model("Result", resultSchema);

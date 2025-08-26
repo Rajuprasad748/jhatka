@@ -1,4 +1,3 @@
-// AuthProvider.jsx
 import { useState, useEffect } from "react";
 import AuthContext from "./useAuth";
 import axios from "axios";
@@ -48,8 +47,13 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  // 🔥 new helper to update user state manually
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

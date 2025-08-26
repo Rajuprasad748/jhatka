@@ -1,4 +1,5 @@
 import Game from "../models/addGame.js";
+import Result from "../models/result.js";
 
 export const getAllGames = async (req, res) => {
   try {
@@ -11,33 +12,49 @@ export const getAllGames = async (req, res) => {
 };
 
 
-export const updateGameDigits = async (req, res) => {
+export const setResult = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { type, digits } = req.body; // type = "open" or "close"
+    const { gameId, type, value } = req.body;
 
-    console.log("Updating game:", id, "Type:", type, "Digits:", digits);
+    // Find game to get its open/close time
+    const game = await Game.findById(gameId);
+    if (!game) return res.status(404).json({ message: "Game not found" });
 
-    if (!Array.isArray(digits) || digits.length === 0) {
-      return res.status(400).json({ error: "Digits array is required" });
-    }
+    let scheduledTime;
+    if (type === "open") scheduledTime = game.openTime;
+    else if (type === "close") scheduledTime = game.closeTime;
+    else return res.status(400).json({ message: "Invalid type" });
 
-    const updateField =
-      type === "open" ? { openDigits: digits } : { closeDigits: digits };
+    const result = new Result({
+      gameId,
+      type,
+      value,
+      scheduledTime,
+      published: false, // will be true only after scheduledTime
+    });
 
-    const updatedGame = await Game.findByIdAndUpdate(
-      req.params.id,
-      { $set: updateField },
-      { new: true }
-    );
+    await result.save();
 
-    if (!updatedGame) {
-      return res.status(404).json({ error: "Game not found" });
-    }
-
-    res.json(updatedGame);
+    res.json({ message: "Result scheduled successfully", result });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to update game" });
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const updateResult = async (req, res) => {
+  try {
+    const { gameId } = req.params;
+
+    // fetch all results (open + close) for a game
+    const results = await Result.find({ gameId });
+
+    // filter based on time
+    const visibleResults = results.filter(r => {
+      return new Date() >= new Date(r.scheduledTime);
+    });
+
+    res.json({ results: visibleResults });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 }

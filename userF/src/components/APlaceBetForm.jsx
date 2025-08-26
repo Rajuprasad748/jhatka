@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/useAuth.js"; // ✅ import context
 
 const betOptions = [
   { name: "Single Digit", parts: [{ label: "Digits", len: 1 }] },
@@ -6,11 +9,24 @@ const betOptions = [
   { name: "Single Pana (A)", parts: [{ label: "Digits", len: 3 }] },
   { name: "Double Pana (AA)", parts: [{ label: "Digits", len: 3 }] },
   { name: "Triple Pana (AAA)", parts: [{ label: "Digits", len: 3 }] },
-  { name: "Half Sangam", parts: [{ label: "Open Digit" }, { label: "Close Pana" }] }, // len decided dynamically
+  { name: "Half Sangam", parts: [{ label: "Open Digit" }, { label: "Close Pana" }] },
   { name: "Full Sangam (XXX-XX-XXX)", parts: [{ label: "First Part", len: 3 }, { label: "Second Part", len: 3 }] },
 ];
 
+const betTypeMap = {
+  "Single Digit": "singleDigit",
+  "Jodi": "jodi",
+  "Single Pana (A)": "singlePana",
+  "Double Pana (AA)": "doublePana",
+  "Triple Pana (AAA)": "triplePana",
+  "Half Sangam": "halfSangam",
+  "Full Sangam (XXX-XX-XXX)": "fullSangam",
+};
+
 const APlaceBetForm = () => {
+  const navigate = useNavigate();
+  const { user, updateUser } = useAuth(); // ✅ get user + updater
+
   const [selectedOption, setSelectedOption] = useState(betOptions[0].name);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -23,7 +39,7 @@ const APlaceBetForm = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name.startsWith("part-")) {
-      const numericValue = value.replace(/\D/g, ""); // only numbers
+      const numericValue = value.replace(/\D/g, ""); 
       setFormData({
         ...formData,
         digits: { ...formData.digits, [name]: numericValue },
@@ -37,12 +53,12 @@ const APlaceBetForm = () => {
   };
 
   // Validation & Submit
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     let option = betOptions.find((o) => o.name === selectedOption);
 
-    // Special rules for Half Sangam
+    // 🔹 Special validation for Half Sangam
     if (selectedOption === "Half Sangam") {
       const openLen = formData.session === "open" ? 3 : 1;
       const closeLen = formData.session === "open" ? 1 : 3;
@@ -56,7 +72,7 @@ const APlaceBetForm = () => {
         return;
       }
     } else {
-      // Normal validation
+      // 🔹 Normal validation
       for (let i = 0; i < option.parts.length; i++) {
         const partName = `part-${i}`;
         const requiredLen = option.parts[i].len;
@@ -72,19 +88,43 @@ const APlaceBetForm = () => {
       return;
     }
 
-    console.log("Form Submitted:", {
-      option: selectedOption,
-      ...formData,
-    });
-    alert("Bet submitted successfully!");
+    // 🔹 Build payload matching schema
+    const payload = {
+      user: user?._id, // ✅ logged-in user id
+      betType: betTypeMap[selectedOption],
+      date: new Date(formData.date),
+      marketType: formData.session,
+      digits: Object.values(formData.digits).join("-"),
+      points: parseInt(formData.points, 10),
+    };
 
-    // reset
-    setFormData({
-      date: new Date().toISOString().split("T")[0],
-      session: "open",
-      digits: {},
-      points: "",
-    });
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/bet/place-bet`,
+        payload,
+        { withCredentials: true }
+      );
+
+      // ✅ update wallet instantly
+      if (res.data.walletBalance !== undefined) {
+        updateUser({ ...user, walletBalance: res.data.walletBalance });
+      }
+
+      alert("Bet submitted successfully!");
+
+      // reset form
+      setFormData({
+        date: new Date().toISOString().split("T")[0],
+        session: "open",
+        digits: {},
+        points: "",
+      });
+
+      navigate("/");
+    } catch (error) {
+      console.error("Error placing bet:", error);
+      alert("Failed to place bet. Please try again.");
+    }
   };
 
   const currentOption = betOptions.find((o) => o.name === selectedOption);

@@ -1,41 +1,51 @@
 import Bet from "../models/placeBet.js";
+import User from "../models/User.js";
 
+// POST /api/bets
 export const placeBet = async (req, res) => {
   try {
-    const { betType, marketType, digits, points } = req.body;
+    const { betType, date, marketType, digits, points } = req.body;
 
-    // Validation based on betType
-    const lengthRules = {
-      singleDigit: 1,
-      jodi: 2,
-      singlePana: 3,
-      doublePana: 3,
-      triplePana: 3,
-      halfSangam: 4,
-      fullSangam: 6,
-    };
-
-    if (!lengthRules[betType]) {
-      return res.status(400).json({ message: "Invalid bet type" });
+    // Basic validation
+    if (!betType || !date || !marketType || !digits || !points) {
+      return res.status(400).json({ message: "All fields are required" });
     }
 
-    if (digits.length !== lengthRules[betType]) {
-      return res
-        .status(400)
-        .json({ message: `Digits must be ${lengthRules[betType]} characters long` });
+    // user is injected from verifyToken middleware
+    const userId = req.user.id;
+
+    // ✅ Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    // Save bet with user reference
-    const bet = new Bet({
-      user: req.user.id, // Assuming user is set by auth middleware
+    // ✅ Check wallet balance
+    if (user.walletBalance < points) {
+      return res.status(400).json({ message: "Insufficient wallet balance" });
+    }
+
+    // ✅ Deduct points from wallet
+    user.walletBalance -= points;
+    await user.save();
+
+    // ✅ Save bet
+    const newBet = new Bet({
+      user: userId,
       betType,
+      date,
       marketType,
       digits,
       points,
     });
 
-    await bet.save();
-    res.status(201).json({ message: "Bet placed successfully", bet });
+    await newBet.save();
+
+    res.status(201).json({
+      message: "Bet placed successfully",
+      bet: newBet,
+      walletBalance: user.walletBalance, // ✅ return updated wallet balance
+    });
   } catch (error) {
     console.error("Error placing bet:", error);
     res.status(500).json({ message: "Server error" });

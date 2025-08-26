@@ -7,31 +7,33 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
       minlength: 2,
-      maxlength: 50,
+      maxlength: 100,
     },
     mobile: {
       type: String,
       required: true,
       unique: true,
-      match: [/^\d{10}$/, "Please enter a valid 10-digit mobile number"],
+      match: /^[0-9]{10}$/, // Ensures 10-digit mobile number
     },
     email: {
       type: String,
       required: true,
       unique: true,
       lowercase: true,
-      trim: true,
-      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
+      match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, // Email validation
     },
     password: {
       type: String,
       required: true,
       minlength: 6,
     },
+    walletBalance: {
+      type: Number,
+      default: 1500, // ✅ Default balance for new users
+      min: 0,        // Prevents negative balance
+    },
   },
   { timestamps: true }
 );
 
-const User = mongoose.model("User", userSchema);
-
-export default User;
+export default mongoose.model("User", userSchema);
