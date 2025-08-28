@@ -1,55 +1,62 @@
 
 import { findUserById } from "../services/user.services.js";
+import User from "../models/User.js";
 
-export const addMoneyToWallet = async (req, res) => {
-  const { userId, amount, method, transactionId } = req.body;
+// Add tokens to wallet
+export const addTokens = async (req, res) => {
+  const { userId } = req.params;
+  console.log("userId123" , userId);
+  try {
+    const { tokens } = req.body;
 
-  // Validate input
-  if (!userId || !amount || !method || !transactionId) {
-    return res.status(400).json({ message: 'All fields are required' });
+    console.log("tokens2" , tokens);
+
+    if (!tokens || tokens <= 0) {
+      return res.status(400).json({ message: "Tokens must be a positive number" });
+    }
+
+    const user = await User.findById(userId);
+    console.log(user)
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+
+    user.walletBalance += Number(tokens);
+    await user.save();
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
+};
 
-  // Find user
-  const user = await findUserById(userId);
-  if (!user) {
-    return res.status(404).json({ message: 'User not found' });
+
+
+export const removeTokens = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { tokens } = req.body;
+
+    if (!tokens || tokens <= 0) {
+      return res.status(400).json({ message: "Tokens must be a positive number" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.walletBalance < tokens) {
+      return res.status(400).json({ message: "Insufficient balance" });
+    }
+
+    // Deduct tokens
+    user.walletBalance -= Number(tokens);
+    await user.save();
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-
-  // Create add money transaction
-  const addMoneyTransaction = await AddMoney.create({
-    userId,
-    amount,
-    method,
-    transactionId,
-    status: 'pending'
-  });
-
-  res.status(201).json({ message: 'Money added successfully', transaction: addMoneyTransaction });
-}
-
-
-export const withdrawMoney = async (req, res) => {
-  const { userId, accountHolderName, accountNumber, ifscCode, amount } = req.body;
-
-  // Validate input
-  if (!userId || !accountHolderName || !accountNumber || !ifscCode || !amount) {
-    return res.status(400).json({ message: 'All fields are required' });
-  }
-
-  // Find user
-  const user = await findUserById(userId);
-  if (!user) {
-    return res.status(404).json({ message: 'User not found' });
-  }
-
-  // Create withdraw request
-  const withdrawRequest = await WithdrawRequest.create({
-    userId,
-    accountHolderName,
-    accountNumber,
-    ifscCode,
-    amount
-  });
-
-  res.status(201).json({ message: 'Withdraw request created successfully', request: withdrawRequest });
-}
+};

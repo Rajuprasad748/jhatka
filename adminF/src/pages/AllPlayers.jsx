@@ -8,8 +8,7 @@ const AllPlayers = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_BASE_URL;
-        const res = await axios.get(`${API_URL}/admin/all-users`);
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/all-users`);
         setUsers(res.data);
       } catch (err) {
         console.error("Failed to fetch users:", err);
@@ -49,10 +48,16 @@ const AllPlayers = () => {
               >
                 <p className="text-sm font-medium">#{index + 1}</p>
                 <p className="text-sm">
+                  <span className="font-medium">ID:</span> {user._id}
+                </p>
+                <p className="text-sm">
                   <span className="font-medium">Name:</span> {user.name}
                 </p>
                 <p className="text-sm">
                   <span className="font-medium">Email:</span> {user.email}
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium">Wallet Balance:</span> ₹{user.walletBalance ?? 0}
                 </p>
                 <p className="text-sm">
                   <span className="font-medium">Created:</span>{" "}
@@ -76,30 +81,32 @@ const AllPlayers = () => {
       {!loading && (
         <div className="hidden md:block overflow-x-auto">
           {users.length > 0 ? (
-            <>
-              <table className="w-full table-auto border border-gray-300">
-                <thead>
-                  <tr className="bg-gray-300">
-                    <th className="border px-4 py-2 text-left">#</th>
-                    <th className="border px-4 py-2 text-left">Name</th>
-                    <th className="border px-4 py-2 text-left">Email</th>
-                    <th className="border px-4 py-2 text-left">Created At</th>
+            <table className="w-full table-auto border border-gray-300">
+              <thead>
+                <tr className="bg-gray-300">
+                  <th className="border px-4 py-2 text-left">#</th>
+                  <th className="border px-4 py-2 text-left">ID</th>
+                  <th className="border px-4 py-2 text-left">Name</th>
+                  <th className="border px-4 py-2 text-left">Email</th>
+                  <th className="border px-4 py-2 text-left">Wallet Balance</th>
+                  <th className="border px-4 py-2 text-left">Created At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user, index) => (
+                  <tr key={user._id} className="hover:bg-gray-50">
+                    <td className="border px-4 py-2">{index + 1}</td>
+                    <td className="border px-4 py-2">{user._id}</td>
+                    <td className="border px-4 py-2">{user.name}</td>
+                    <td className="border px-4 py-2">{user.email}</td>
+                    <td className="border px-4 py-2">₹{user.walletBalance ?? 0}</td>
+                    <td className="border px-4 py-2">
+                      {new Date(user.createdAt).toLocaleString()}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {users.map((user, index) => (
-                    <tr key={user._id} className="hover:bg-gray-50">
-                      <td className="border px-4 py-2">{index + 1}</td>
-                      <td className="border px-4 py-2">{user.name}</td>
-                      <td className="border px-4 py-2">{user.email}</td>
-                      <td className="border px-4 py-2">
-                        {new Date(user.createdAt).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
+                ))}
+              </tbody>
+            </table>
           ) : (
             <div className="flex justify-center py-10">
               <img

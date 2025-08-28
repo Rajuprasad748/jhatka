@@ -27,17 +27,15 @@ const BetForm = () => {
     if (!selectedGame || !digits)
       return alert("Please select a game and enter digits");
 
-    const digitsArray = digits.split("").map(Number); // Convert "372" → [3,7,2]
-    console.log(selectedGame , digitsArray);
-
     try {
-      const res = await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/games/${selectedGame}`,
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/set-result/${selectedGame}`,
         {
           type,
-          digits: digitsArray,
+          value: digits,
         }
       );
+      
       setGames(games.map((g) => (g._id === res.data._id ? res.data : g)));
       alert("Updated successfully!");
     } catch (err) {

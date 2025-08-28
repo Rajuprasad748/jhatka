@@ -25,13 +25,13 @@ const ADashboard = () => {
     img: 'https://dummyimage.com/423x263',
   },
   {
-    title: 'Account Settings',
-    Link: '/account',
+    title: 'Add Tokens',
+    Link: '/addToken',
     img: 'https://dummyimage.com/424x264',
   },
   {
-    title: 'About US',
-    Link: 'about',
+    title: 'Remove Tokens',
+    Link: '/removeToken',
     img: 'https://dummyimage.com/425x265',
   },
   {
@@ -40,8 +40,8 @@ const ADashboard = () => {
     img: 'https://dummyimage.com/427x267',
   },
   {
-    title: 'The 400 Blows',
-    Link: '/',
+    title: 'Tokens',
+    Link: '/tokens',
     img: 'https://dummyimage.com/428x268',
   },
 ];

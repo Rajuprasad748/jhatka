@@ -3,10 +3,11 @@ import AHome from './pages/AHome';
 import LoginForm from './components/LoginForm';
 import AllPlayers from './pages/AllPlayers';
 import PlaceBet from './pages/PlaceBet';
-import AAcount from './pages/AAcount';
+import AddToken from './components/AddToken';
 import Header from './components/Header';
 import ApaymentHistory from './pages/ApaymentHistory';
-import AAbout from './pages/AAbout';
+import RemoveToken from './components/RemoveToken';
+import ManageTokens from './components/ManageTokens';
 
 function App() {
   return (
@@ -18,11 +19,11 @@ function App() {
         <Route path="/" element={<AHome />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/users" element={<AllPlayers/>} />
-        <Route path="/about" element={<AAbout/>} />
+        <Route path="/removeToken" element={<RemoveToken/>} />
         <Route path="/bet" element={<PlaceBet/>} />
-        <Route path="/account" element={<AAcount/>} />
+        <Route path="/addToken" element={<AddToken/>} />
         <Route path="/paymenthistory" element={<ApaymentHistory/>} />
-        <Route path="/bethistory" element={<AAcount/>} />
+        <Route path="/tokens" element={<ManageTokens/>} />
       </Routes>
     </>
   );

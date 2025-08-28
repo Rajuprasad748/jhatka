@@ -1,13 +1,14 @@
 import Bet from "../models/placeBet.js";
 import User from "../models/User.js";
+import Game from "../models/addGame.js";
 
 // POST /api/bets
 export const placeBet = async (req, res) => {
   try {
-    const { betType, date, marketType, digits, points } = req.body;
+    const { betType, date, marketType, digits, points, gameId } = req.body;
 
     // Basic validation
-    if (!betType || !date || !marketType || !digits || !points) {
+    if (!betType || !date || !marketType || !digits || !points || !gameId) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -20,18 +21,24 @@ export const placeBet = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const game = await Game.findById(gameId);
+    if (!game) {
+      return res.status(404).json({ message: "Game not found" });
+    }
+
     // ✅ Check wallet balance
-    if (user.walletBalance < points) {
+    const pointsNumber = Number(points); // ensure number
+    if (user.walletBalance < pointsNumber) {
       return res.status(400).json({ message: "Insufficient wallet balance" });
     }
 
-    // ✅ Deduct points from wallet
-    user.walletBalance -= points;
+    user.walletBalance -= pointsNumber;
     await user.save();
 
     // ✅ Save bet
     const newBet = new Bet({
       user: userId,
+      gameName: game.name,
       betType,
       date,
       marketType,

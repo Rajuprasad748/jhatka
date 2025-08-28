@@ -23,6 +23,10 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     fetchUser();
+
+    // 🔥 Auto-refresh user every 60 sec
+    const interval = setInterval(fetchUser, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   const login = async (credentials) => {
@@ -53,7 +57,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, updateUser }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, updateUser, fetchUser }}>
       {children}
     </AuthContext.Provider>
   );
