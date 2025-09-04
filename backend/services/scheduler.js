@@ -2,6 +2,7 @@
 import schedule from "node-schedule";
 import Result from "../models/result.js";
 import Game from "../models/addGame.js";
+import { processBets } from "../controllers/gameController.js"; // ✅ use private function
 
 // Parse "hh:mm AM/PM" → { hour, minute }
 function parseTime(timeStr) {
@@ -17,85 +18,64 @@ function parseTime(timeStr) {
 // Schedules jobs for each game
 function scheduleGameJobs(games) {
   games.forEach((game) => {
-
     const { hour: openHour, minute: openMinute } = parseTime(game.openingTime);
     const { hour: closeHour, minute: closeMinute } = parseTime(game.closingTime);
 
+    // 👉 OPEN JOB
+    schedule.scheduleJob({ hour: openHour, minute: openMinute }, async function () {
+      console.log(`🔓 Game "${game.name}" OPEN JOB running at ${new Date()}`);
+      try {
+        const result = await Result.findOne({ gameId: game._id, type: "open", published: false });
 
+        console.log('result' , result)
 
-    // 👉 OPEN JOB (runs every day at openingTime)
-    schedule.scheduleJob(
-      { hour: openHour, minute: openMinute },
-      async function () {
-        console.log(`🔓 Game "${game.name}" OPEN JOB running at ${new Date()}`);
+        if (result) {
+          result.published = true;
+          await result.save();
 
-        try {
-          const result = await Result.findOne({
-            gameId: game._id,
-            type: "open",
-            published: false,
-          });
+          game.openDigits = result.value;
+          await game.save();
 
-          if (result) {
-            result.published = true;
-            await result.save();
+          console.log(`✅ Published OPEN result for "${game.name}" → ${result.value.join("")}`);
 
-            game.openDigits = result.value; // e.g. [3,7,2]
-            await game.save();
-
-            console.log(
-              `✅ Published OPEN result for "${game.name}" → ${result.value.join(
-                ""
-              )}`
-            );
-          } else {
-            console.log(`⚠️ No OPEN result found for "${game.name}"`);
-          }
-        } catch (err) {
-          console.error(
-            `❌ Error in OPEN job for "${game.name}":`,
-            err.message
-          );
+          // ✅ Immediately process bets
+          await processBets(game._id, "open");
+          console.log(" done")
+        } else {
+          console.log(`⚠️ No OPEN result found for "${game.name}"`);
         }
+      } catch (err) {
+        console.error(`❌ Error in OPEN job for "${game.name}":`, err.message);
       }
-    );
+    });
 
-    // 👉 CLOSE JOB (runs every day at closingTime)
-    schedule.scheduleJob(
-      { hour: closeHour, minute: closeMinute },
-      async function () {
-        console.log(`🔒 Game "${game.name}" CLOSE JOB running at ${new Date()}`);
+    // 👉 CLOSE JOB
+    schedule.scheduleJob({ hour: closeHour, minute: closeMinute }, async function () {
+      console.log(`🔒 Game "${game.name}" CLOSE JOB running at ${new Date()}`);
+      try {
+        const result = await Result.findOne({ gameId: game._id, type: "close", published: false });
+        console.log("result close object", result);
+        if (result) {
+          result.published = true;
+          await result.save();
 
-        try {
-          const result = await Result.findOne({
-            gameId: game._id,
-            type: "close",
-            published: false,
-          });
+          game.closeDigits = result.value;
+          await game.save();
 
-          if (result) {
-            result.published = true;
-            await result.save();
+          console.log("object", game)
 
-            game.closeDigits = result.value; // e.g. [4,9,1]
-            await game.save();
+          console.log(`✅ Published CLOSE result for "${game.name}" → ${result.value.join("")}`);
 
-            console.log(
-              `✅ Published CLOSE result for "${game.name}" → ${result.value.join(
-                ""
-              )}`
-            );
-          } else {
-            console.log(`⚠️ No CLOSE result found for "${game.name}"`);
-          }
-        } catch (err) {
-          console.error(
-            `❌ Error in CLOSE job for "${game.name}":`,
-            err.message
-          );
+          // ✅ Immediately process bets
+          console.log("before processBets");
+          await processBets(game._id, "close");
+        } else {
+          console.log(`⚠️ No CLOSE result found for "${game.name}"`);
         }
+      } catch (err) {
+        console.error(`❌ Error in CLOSE job for "${game.name}":`, err.message);
       }
-    );
+    });
 
     console.log(`📌 Scheduled jobs for game: ${game.name}`);
   });
@@ -104,12 +84,11 @@ function scheduleGameJobs(games) {
 // Initialize all schedules on server start
 export async function initScheduler() {
   try {
-    const games = await Game.find(); // fetch from DB
+    const games = await Game.find();
     if (!games.length) {
       console.log("⚠️ No games found in DB to schedule");
       return;
     }
-
     console.log("📅 Initializing daily game schedulers...");
     scheduleGameJobs(games);
   } catch (err) {

@@ -15,8 +15,8 @@ const ADashboard = () => {
     img: 'https://dummyimage.com/421x261',
   },
   {
-    title: 'Payment History',
-    Link: '/paymentHistory',
+    title: 'Update Time',
+    Link: '/updateTime',
     img: 'https://dummyimage.com/422x262',
   },
   {
@@ -35,13 +35,13 @@ const ADashboard = () => {
     img: 'https://dummyimage.com/425x265',
   },
   {
-    title: 'Neptune',
-    Link: '/',
+    title: 'Add Token History',
+    Link: '/addTokenHistory',
     img: 'https://dummyimage.com/427x267',
   },
   {
-    title: 'Tokens',
-    Link: '/tokens',
+    title: 'Remove Token History',
+    Link: '/removeTokenHistory',
     img: 'https://dummyimage.com/428x268',
   },
 ];

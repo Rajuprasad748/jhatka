@@ -5,27 +5,26 @@ const AddToken = () => {
   const [userId, setUserId] = useState("");
   const [user, setUser] = useState(null);
   const [tokens, setTokens] = useState("");
+  const [remark, setRemark] = useState("Tokens added successfully!"); // ✅ new state
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState(false);
   const [animatedBalance, setAnimatedBalance] = useState(0);
   const prevBalanceRef = useRef(0);
 
-  // Animate wallet balance whenever user.walletBalance changes
+  // Animate wallet balance
   useEffect(() => {
     if (user?.walletBalance !== undefined) {
       const start = prevBalanceRef.current || 0;
       const end = user.walletBalance;
-      const duration = 800; // animation duration in ms
+      const duration = 800;
       const startTime = performance.now();
 
       const animate = (currentTime) => {
         const progress = Math.min((currentTime - startTime) / duration, 1);
         const currentValue = Math.floor(start + (end - start) * progress);
         setAnimatedBalance(currentValue);
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        }
+        if (progress < 1) requestAnimationFrame(animate);
       };
 
       requestAnimationFrame(animate);
@@ -54,7 +53,7 @@ const AddToken = () => {
     }
   };
 
-  // Add tokens to wallet (called only after confirmation)
+  // Add tokens with remark
   const handleAddTokens = async () => {
     if (!tokens || isNaN(tokens)) {
       setMessage("Please enter a valid number of tokens");
@@ -68,12 +67,13 @@ const AddToken = () => {
     try {
       const res = await axios.put(
         `${import.meta.env.VITE_API_BASE_URL}/addTokens/${userId}`,
-        { tokens: Number(tokens) }
+        { tokens: Number(tokens), remark } // ✅ sending remark too
       );
       setUser(res.data);
       setTokens("");
+      setRemark("Token added successfully!"); // reset to default
       setMessage("Tokens added successfully!");
-      setConfirmDialog(false); // close dialog
+      setConfirmDialog(false);
     } catch (error) {
       setMessage(error.response?.data?.message || error.message || "Error adding tokens");
     } finally {
@@ -114,9 +114,20 @@ const AddToken = () => {
         </div>
       )}
 
-      {/* Add tokens input */}
+      {/* Remark + Add tokens input */}
       {user && (
         <>
+          {/* Remark input */}
+          <textarea
+            placeholder="Enter remark"
+            value={remark}
+            maxLength={100}
+            onChange={(e) => setRemark(e.target.value)}
+            rows={2}
+            className="w-full px-4 py-2 mb-2 border rounded-lg resize-none"
+          />
+
+          {/* Tokens input */}
           <input
             type="number"
             placeholder="Enter tokens to add"
@@ -141,6 +152,9 @@ const AddToken = () => {
             <h3 className="text-xl font-semibold mb-4 text-center">Are you sure?</h3>
             <p className="text-lg text-gray-600 mb-6 text-center">
               Do you really want to add <strong>{tokens}</strong> tokens to {user?.name}'s wallet?
+            </p>
+            <p className="text-md text-gray-500 mb-6 text-center">
+              <strong>Remark:</strong> {remark}
             </p>
             <div className="flex justify-around">
               <button

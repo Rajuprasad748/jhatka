@@ -1,26 +1,49 @@
-
-import { findUserById } from "../services/user.services.js";
 import User from "../models/User.js";
+import Token from "../models/token.model.js";
+
+export const getAllTokens = async (req, res) => {
+  try {
+    const tokens = await Token.find() // only add tokens
+      .populate("userId", "name mobile") // get username + mobile
+      .sort({ time: -1 });
+    res.json(tokens);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 // Add tokens to wallet
 export const addTokens = async (req, res) => {
   const { userId } = req.params;
-  console.log("userId123" , userId);
+  console.log("userId123", userId);
   try {
-    const { tokens } = req.body;
+    const { tokens , remark } = req.body;
 
-    console.log("tokens2" , tokens);
+    console.log("tokens2", tokens);
 
     if (!tokens || tokens <= 0) {
-      return res.status(400).json({ message: "Tokens must be a positive number" });
+      return res
+        .status(400)
+        .json({ message: "Tokens must be a positive number" });
+    }
+    
+    if (!remark) {
+      return res.status(400).json({ message: "Remark is required" });
     }
 
     const user = await User.findById(userId);
-    console.log(user)
+    console.log(user);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const token = new Token({
+      userId,
+      amount: tokens,
+      remark,
+      type: "add",
+    });
+    await token.save();
 
     user.walletBalance += Number(tokens);
     await user.save();
@@ -31,15 +54,19 @@ export const addTokens = async (req, res) => {
   }
 };
 
-
-
 export const removeTokens = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { tokens } = req.body;
+    const { tokens , remark } = req.body;
 
     if (!tokens || tokens <= 0) {
-      return res.status(400).json({ message: "Tokens must be a positive number" });
+      return res
+        .status(400)
+        .json({ message: "Tokens must be a positive number" });
+    }
+
+    if (!remark) {
+      return res.status(400).json({ message: "Remark is required" });
     }
 
     const user = await User.findById(userId);
@@ -50,6 +77,14 @@ export const removeTokens = async (req, res) => {
     if (user.walletBalance < tokens) {
       return res.status(400).json({ message: "Insufficient balance" });
     }
+
+    const token = new Token({
+      userId,
+      amount: tokens,
+      remark,
+      type: "remove",
+    });
+    await token.save();
 
     // Deduct tokens
     user.walletBalance -= Number(tokens);

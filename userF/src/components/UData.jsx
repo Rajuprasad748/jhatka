@@ -89,7 +89,7 @@ const UData = () => {
             return (
               <div
                 key={_id}
-                className="bg-gray-800 border border-gray-700 rounded-xl p-3 sm:p-4 shadow-md space-y-3"
+                className="bg-gray-800 border border-gray-700 rounded-xl p-3 sm:p-4 shadow-md"
               >
                 {/* Time Row */}
                 <div className="text-xs sm:text-sm text-center text-gray-400">
@@ -99,20 +99,14 @@ const UData = () => {
                 {/* Game Info Row */}
                 <div className="flex items-center justify-between gap-2 sm:gap-3">
                   {/* Left Link / Icon */}
-                  {closed ? (
                     <div className="px-2 sm:px-3 py-1 rounded-lg text-lg bg-gray-500 text-gray-300 cursor-not-allowed">
-                      🏺
-                    </div>
-                  ) : (
-                    <Link
-                      to={`/game/${name.replace(/\s+/g, "-").toLowerCase()}`}
-                      state={{ game: item }}
-                      aria-label={`View ${name} game`}
-                      className="px-2 sm:px-3 py-1 rounded-lg text-lg bg-yellow-400 text-black hover:bg-yellow-300 transition"
-                    >
-                      🏺
+                      <Link
+                      to={`/betHistory`}
+                      state={{ game: item }}                    >
+                      ❤️
                     </Link>
-                  )}
+                    </div>
+
 
                   {/* Name + Digits */}
                   <div className="flex-1 text-center">

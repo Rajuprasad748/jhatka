@@ -8,7 +8,7 @@ export const placeBet = async (req, res) => {
     const { betType, date, marketType, digits, points, gameId } = req.body;
 
     // Basic validation
-    if (!betType || !date || !marketType || !digits || !points || !gameId) {
+    if (!betType || !date || !marketType || !digits || !points || !gameId ) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -38,6 +38,7 @@ export const placeBet = async (req, res) => {
     // ✅ Save bet
     const newBet = new Bet({
       user: userId,
+      gameId,
       gameName: game.name,
       betType,
       date,
@@ -55,6 +56,20 @@ export const placeBet = async (req, res) => {
     });
   } catch (error) {
     console.error("Error placing bet:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getBetHistory = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // ✅ Fetch bets for the user
+    const bets = await Bet.find({ user: userId }).populate("gameId", "name");
+
+    res.status(200).json(bets);
+  } catch (error) {
+    console.error("Error fetching bet history:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

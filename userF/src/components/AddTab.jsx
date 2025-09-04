@@ -2,10 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const buttons = [
-  { label: '💰 Add Money', to: '/add-money' },
-  { label: '💸 Withdraw', to: '/withdraw' },
-  { label: '📩 Place a bet', to: '/place-bet' },
-  { label: '🟢 Game Rates', to: '/game-rates' },
+  { label: '👤 User Profile', to: '/userProfile' },
+  { label: '💰 Token History', to: '/tokenHistory' },
+  { label: '💸 Bet History', to: '/betHistory' },
+  { label: '🟢 Game Rates', to: '/gameRates' },
 ];
 
 function AddTab() {

@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
+import Token from "../models/token.model.js";
 import { findUserByMobile } from "../services/user.services.js";
 import { GenerateToken } from "../services/user.services.js";
 
@@ -103,4 +104,20 @@ export const logoutUser = (req, res) => {
 
 export const verifyUser = (req, res) => {
   res.json({ isLoggedIn: true, user: req.user });
+};
+
+export const getTokenHistory = async (req, res) => {
+
+  console.log("funtion")
+  try {
+    console.log("object" , req.user)
+    const userId = req.user._id;
+    console.log(userId)
+    const history = await Token.find({ userId }).sort({ createdAt: -1 });
+    console.log("history" , history)
+    res.json(history);
+  } catch (error) {
+    console.error("Error fetching token history:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };

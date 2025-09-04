@@ -1,15 +1,32 @@
+// controllers/resultController.js
 import Game from "../models/addGame.js";
 import Result from "../models/result.js";
 import Bet from "../models/placeBet.js";
+import User from "../models/User.js";
 
 const multipliers = {
-  "Single Digit": 9,
-  "Jodi": 90,
-  "Single Pana": 160,
-  "Double Pana": 320,
-  "Triple Pana": 900,
-  "Half Sangam": 1500,
-  "Full Sangam": 90000,
+  singleDigit: 9,
+  jodi: 90,
+  singlePana: 160,
+  doublePana: 320,
+  triplePana: 900,
+  halfSangam: 1500,
+  fullSangam: 90000,
+};
+
+// Utility: sum last digit
+function getLastDigitSum(arr) {
+  return (arr.reduce((a, b) => a + b, 0) % 10).toString();
+}
+
+const formatTime = (timeString) => {
+  const [time, meridian] = timeString.split(" ");
+  let [hours, minutes] = time.split(":");
+
+  // Pad hours with leading zero if needed
+  hours = hours.padStart(2, "0");
+
+  return `${hours}:${minutes} ${meridian.toUpperCase()}`;
 };
 
 
@@ -22,11 +39,55 @@ export const getAllGames = async (req, res) => {
     res.status(500).json({ error: "Server error while fetching games" });
   }
 };
+export const getGame = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const game = await Game.findById(id);
+    console.log("findGame", game)
+    if (!game) return res.status(404).json({ message: "Game not found" });
+    res.json(game);
+  } catch (error) {
+    console.error("❌ Error fetching game:", error);
+    res.status(500).json({ error: "Server error while fetching game" });
+  }
+};
 
+
+
+export const updateGameTime = async (req, res) => {
+  const { selectedGameId } = req.params;
+  let { openingTime, closingTime } = req.body;
+
+  try {
+    const game = await Game.findById(selectedGameId);
+    if (!game) return res.status(404).json({ message: "Game not found" });
+
+    // Update whichever time is provided
+    if (openingTime) {
+      game.openingTime = formatTime(openingTime);
+    }
+    if (closingTime) {
+      game.closingTime = formatTime(closingTime);
+    }
+
+    await game.save();
+
+    res.json({
+      message: "Game time updated successfully",
+      game,
+    });
+  } catch (error) {
+    console.error("❌ Error updating game time:", error);
+    res.status(500).json({ error: "Server error while updating game time" });
+  }
+};
+
+// --------------------
+// ADMIN DECLARES RESULT
+// --------------------
 export const setResult = async (req, res) => {
   function parseTimeToToday(timeString) {
-    // Example: "05:00 PM"
-    const [time, modifier] = timeString.split(" "); // ["05:00", "PM"]
+    const [time, modifier] = timeString.split(" ");
     let [hours, minutes] = time.split(":").map(Number);
 
     if (modifier === "PM" && hours !== 12) hours += 12;
@@ -46,11 +107,7 @@ export const setResult = async (req, res) => {
     const { type, value } = req.body;
     const { gameId } = req.params;
 
-    console.log(type, value, gameId);
-
-    // Find game to get its open/close time
     const game = await Game.findById(gameId);
-    console.log(game);
     if (!game) return res.status(404).json({ message: "Game not found" });
 
     let scheduledTime;
@@ -59,14 +116,7 @@ export const setResult = async (req, res) => {
       scheduledTime = parseTimeToToday(game.closingTime);
     else return res.status(400).json({ message: "Invalid type" });
 
-    console.log("openingTime:", game.openingTime);
-    console.log("closingTime:", game.closingTime);
-    console.log("scheduledTime after conversion:", scheduledTime);
-
-    console.log("before creating result");
-
     const digits = value.split("").map(Number);
-    console.log(digits);
 
     const result = new Result({
       gameId,
@@ -74,12 +124,10 @@ export const setResult = async (req, res) => {
       type,
       value: digits,
       scheduledTime,
-      published: false, // will be true only after scheduledTime
+      published: false, // scheduler will publish later
     });
 
     await result.save();
-
-    console.log("result created:", result);
 
     res.json({ message: "Result scheduled successfully", result });
   } catch (err) {
@@ -87,109 +135,127 @@ export const setResult = async (req, res) => {
   }
 };
 
-
-function getLastDigitSum(arr) {
-  return (arr.reduce((a, b) => a + b, 0) % 10).toString();
-}
-
-export const updateResult = async (req, res) => {
+// --------------------
+// PRIVATE: PROCESS BETS
+// --------------------
+export async function processBets(gameId, type) {
   try {
-    const { gameId } = req.params;
+    // fetch the relevant result that just got published
+    const result = await Result.findOne({ gameId, type, published: true });
 
-    // 1. fetch all results (open + close) for a game
-    const results = await Result.find({ gameId });
-    const openResult = results.find((r) => r.type === "open");
-    const closeResult = results.find((r) => r.type === "close");
+    console.log("process bet result", result);
 
-    if (!openResult && !closeResult) {
-      return res.status(404).json({ message: "No results found for game" });
+    if (!result) {
+      console.log(
+        `⚠️ No ${type.toUpperCase()} result found for game ${gameId}`
+      );
+      return;
     }
 
-    // 2. filter results that are published (time passed)
-    const visibleResults = results.filter(
-      (r) => new Date() >= new Date(r.scheduledTime)
-    );
+    // also fetch the opposite result if needed (for jodi, sangam)
+    const openResult =
+      type === "open"
+        ? result
+        : await Result.findOne({ gameId, type: "open", published: true });
+    const closeResult =
+      type === "close"
+        ? result
+        : await Result.findOne({ gameId, type: "close", published: true });
 
-    // 3. Process bets for this game
+    // only pending bets for this game
     const bets = await Bet.find({ gameId, status: "pending" });
 
+    console.log("bets", bets);
+
     for (let bet of bets) {
+      console.log("bet loop", bet);
       let isWinner = false;
       let winningAmount = 0;
 
-      // -------------------------
-      // 🎯 CHECK CONDITIONS
-      // -------------------------
+      // ---------- SINGLE DIGIT ----------
       if (bet.betType === "singleDigit") {
         if (bet.marketType === "open" && openResult) {
           const last = getLastDigitSum(openResult.value);
-          if (bet.digits === last) isWinner = true;
+          if (bet.digits == last) isWinner = true;
         }
         if (bet.marketType === "close" && closeResult) {
           const last = getLastDigitSum(closeResult.value);
-          if (bet.digits === last) isWinner = true;
+          if (bet.digits == last) isWinner = true;
         }
       }
 
+      // ---------- JODI ----------
       if (bet.betType === "jodi" && openResult && closeResult) {
         const jodi =
-          getLastDigitSum(openResult.value) + getLastDigitSum(closeResult.value);
+          getLastDigitSum(openResult.value).toString() +
+          getLastDigitSum(closeResult.value).toString();
+
         if (bet.digits === jodi) isWinner = true;
       }
 
-      if (bet.betType === "singlePana") {
-        const res = bet.marketType === "open" ? openResult : closeResult;
-        if (res) {
-          const resStr = [...res.value].sort((a, b) => a - b).join("");
-          if (bet.digits === resStr) isWinner = true;
-        }
-      }
+      // ---------- SINGLE / DOUBLE / TRIPLE PANA ----------
+      if (["singlePana", "doublePana", "triplePana"].includes(bet.betType)) {
+  const res = bet.marketType === "open" ? openResult : closeResult;
+  if (res) {
+    const resultStr = result.value.join("");
 
-      if (bet.betType === "doublePana") {
-        const res = bet.marketType === "open" ? openResult : closeResult;
-        if (res) {
-          const sorted = [...res.value].sort((a, b) => a - b).join("");
-          // double pana means exactly 2 digits same
-          const set = new Set(res.value);
-          if (set.size === 2 && bet.digits === sorted) isWinner = true;
-        }
+    if (bet.betType === "singlePana") {
+      // check if result contains the digit anywhere
+      if (resultStr.includes(bet.digits.toString())) {
+        isWinner = true;
       }
+    }
 
-      if (bet.betType === "triplePana") {
-        const res = bet.marketType === "open" ? openResult : closeResult;
-        if (res) {
-          const sorted = [...res.value].sort((a, b) => a - b).join("");
-          const set = new Set(res.value);
-          if (set.size === 1 && bet.digits === sorted) isWinner = true;
-        }
+    if (bet.betType === "doublePana") {
+      // check if the result contains the two-digit sequence
+      if (resultStr.includes(bet.digits.toString())) {
+        isWinner = true;
       }
+    }
 
+    if (bet.betType === "triplePana") {
+      // check if all digits are equal and match user input
+      if (
+        resultStr.length === 3 &&
+        resultStr.split("").every((d) => d === resultStr[0]) &&
+        resultStr === bet.digits.toString()
+      ) {
+        isWinner = true;
+      }
+    }
+  }
+}
+
+
+      // ---------- HALF SANGAM ----------
       if (bet.betType === "halfSangam" && openResult && closeResult) {
         if (bet.marketType === "open") {
           const openStr = [...openResult.value].sort((a, b) => a - b).join("");
           const lastClose = getLastDigitSum(closeResult.value);
-          const combo = openStr + lastClose;
-          if (bet.digits === combo) isWinner = true;
+          if (bet.digits === openStr + lastClose) isWinner = true;
         }
         if (bet.marketType === "close") {
-          const closeStr = [...closeResult.value].sort((a, b) => a - b).join("");
+          const closeStr = [...closeResult.value]
+            .sort((a, b) => a - b)
+            .join("");
           const lastOpen = getLastDigitSum(openResult.value);
-          const combo = closeStr + lastOpen;
-          if (bet.digits === combo) isWinner = true;
+          if (bet.digits === closeStr + lastOpen) isWinner = true;
         }
       }
 
+      // ---------- FULL SANGAM ----------
       if (bet.betType === "fullSangam" && openResult && closeResult) {
         const openStr = [...openResult.value].sort((a, b) => a - b).join("");
         const closeStr = [...closeResult.value].sort((a, b) => a - b).join("");
-        const combo = openStr + closeStr;
-        if (bet.digits === combo) isWinner = true;
+        if (bet.digits === openStr + closeStr) isWinner = true;
       }
 
-      // -------------------------
-      // 🎯 PAYOUT
-      // -------------------------
+      console.log("before if" , isWinner);
+
+      // ---------- SETTLEMENT ----------
       if (isWinner) {
+              console.log("after if" , isWinner);
+
         winningAmount = bet.points * (multipliers[bet.betType] || 1);
         await User.findByIdAndUpdate(bet.user, {
           $inc: { walletBalance: winningAmount },
@@ -201,22 +267,15 @@ export const updateResult = async (req, res) => {
         bet.status = "lost";
         bet.winningAmount = 0;
       }
-
+      console.log("last bet" , bet)
       await bet.save();
     }
 
-    // 4. mark results as published
-    for (let result of visibleResults) {
-      result.published = true;
-      await result.save();
-    }
-
-    res.json({
-      message: "✅ Results processed & bets settled successfully",
-      results: visibleResults,
-    });
+    console.log(
+      `🎯 Bets processed successfully for game ${gameId} (${type.toUpperCase()})`
+    );
   } catch (err) {
-    console.error("❌ Error in updateResult:", err);
-    res.status(500).json({ message: err.message });
+    console.error("❌ Error in processBets:", err.message);
+    console.log("error gameController")
   }
-};
+}

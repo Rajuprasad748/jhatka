@@ -1,16 +1,17 @@
 import { Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 import UHome from "./pages/UHome";
 import UserSignUp from "./components/UserSignUp";
 import UserLogin from "./components/UserLogin";
 import Header from "./components/Header";
-import AddMoney from "./pages/AddMoney";
-import WithdrawAmount from "./pages/WithdrawAmount";
+import BetHistory from "./components/BetHistory";
 import PlaceBetForm from "./pages/PlaceBetForm";
-import History from "./pages/History";
 import GameRates from "./components/GameRates";
 import PrivateRoute from "./context/PrivateRoute";
+import UserCard from "./components/UserCard";
+import TokenHistory from "./components/TokenHistory";
 
 function App() {
   return (
@@ -31,27 +32,30 @@ function App() {
         <Header />
 
         <Routes>
-  {/* Public Routes */}
-  <Route path="/" element={<UHome />} />
-  <Route path="/signup" element={<UserSignUp />} />
-  <Route path="/login" element={<UserLogin />} />
-  <Route path="/game-rates" element={<GameRates />} />
+          {/* Public Routes */}
+          <Route path="/" element={<UHome />} />
+          <Route path="/signup" element={<UserSignUp />} />
+          <Route path="/login" element={<UserLogin />} />
+          <Route path="/gameRates" element={<GameRates />} />
+          <Route path="/history" element={<History />} />
 
-  {/* Protected Routes - only check once here */}
-  <Route element={<PrivateRoute />}>
-    <Route path="/add-money" element={<AddMoney />} />
-    <Route path="/withdraw" element={<WithdrawAmount />} />
-    <Route path="/place-bet" element={<PlaceBetForm />} />
-    <Route path="/history" element={<History />} />
-    <Route path="/game/:name" element={<PlaceBetForm />} />
-  </Route>
+          {/* Protected Routes - only check once here */}
+          <Route element={<PrivateRoute />}>
+            <Route path="/betHistory" element={<BetHistory />} />
+            <Route path="/tokenHistory" element={<TokenHistory />} />
+            <Route path="/userProfile" element={<UserCard />} />
+            <Route path="/place-bet" element={<PlaceBetForm />} />
+            <Route path="/game/:name" element={<PlaceBetForm />} />
+          </Route>
 
-  {/* 404 Fallback */}
-  <Route
-    path="*"
-    element={<div className="text-center mt-20">404 | Page Not Found</div>}
-  />
-</Routes>
+          {/* 404 Fallback */}
+          <Route
+            path="*"
+            element={
+              <div className="text-center mt-20">404 | Page Not Found</div>
+            }
+          />
+        </Routes>
       </div>
     </>
   );

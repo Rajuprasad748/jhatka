@@ -7,6 +7,11 @@ const betSchema = new mongoose.Schema(
       ref: "User", // Reference to User model
       required: true,
     },
+    gameId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Game", // Reference to Game model
+      required: true,
+    },
     gameName: {
       type: String,
       required: true,
@@ -34,18 +39,20 @@ const betSchema = new mongoose.Schema(
       required: true,
     },
     digits: {
-      type: String,
+      type: Number,
       required: true,
+      min: 0,
     },
+
     points: {
       type: Number,
       required: true,
       min: 1,
     },
-    status : {
+    status: {
       type: String,
       enum: ["pending", "won", "lost"],
-      default: "pending"
+      default: "pending",
     },
     winningAmount: {
       type: Number,

@@ -7,7 +7,9 @@ import AddToken from './components/AddToken';
 import Header from './components/Header';
 import ApaymentHistory from './pages/ApaymentHistory';
 import RemoveToken from './components/RemoveToken';
-import ManageTokens from './components/ManageTokens';
+import UpdateTime from './pages/UpdateTime';
+import AddTokenHistory from './pages/AddTokenHistory';
+import RemoveTokenHistory from './pages/RemoveTokenHistory';
 
 function App() {
   return (
@@ -23,7 +25,9 @@ function App() {
         <Route path="/bet" element={<PlaceBet/>} />
         <Route path="/addToken" element={<AddToken/>} />
         <Route path="/paymenthistory" element={<ApaymentHistory/>} />
-        <Route path="/tokens" element={<ManageTokens/>} />
+        <Route path="/updateTime" element={<UpdateTime/>} />
+        <Route path="/addTokenHistory" element={<AddTokenHistory/>} />
+        <Route path="/removeTokenHistory" element={<RemoveTokenHistory/>} />
       </Routes>
     </>
   );
