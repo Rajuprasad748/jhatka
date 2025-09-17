@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const buttons = [
+  { label: '👤 Add Tokens', to: '/addTokens' },
+  { label: '💰 Withdraw Tokens', to: '/withdrawTokens' },
   { label: '👤 User Profile', to: '/userProfile' },
   { label: '💰 Token History', to: '/tokenHistory' },
   { label: '💸 Bet History', to: '/betHistory' },

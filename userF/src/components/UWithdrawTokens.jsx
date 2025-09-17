@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/useAuth";
 
-const AddMoney = () => {
+const UWithdrawTokens = () => {
   const [amount, setAmount] = useState("");
   const { user } = useAuth();
 
-  const presetAmounts = [500, 1000, 5000, 10000];
-  const adminNumber = "917489177858"; // ✅ WhatsApp number in international format (+91 not needed in wa.me link if you prefix 91)
+  const presetAmounts = [1000, 2000, 5000, 10000];
+  const adminNumber = "917489177858"; // ✅ Admin WhatsApp number (international format)
 
   const handleWhatsAppRedirect = () => {
     if (!amount) {
@@ -14,7 +14,7 @@ const AddMoney = () => {
       return;
     }
 
-    const message = `I want to add ₹${amount} to my account\n${user?.mobile}`;
+    const message = `I want to withdraw ₹${amount} from my account\n${user?.mobile}`;
     const url = `https://wa.me/${adminNumber}?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank"); // opens WhatsApp
   };
@@ -23,7 +23,7 @@ const AddMoney = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 sm:p-8 space-y-6">
         <h2 className="text-xl sm:text-2xl font-bold text-center text-gray-800">
-          Add Money
+          Withdraw Tokens
         </h2>
 
         {/* Preset buttons */}
@@ -52,11 +52,11 @@ const AddMoney = () => {
           onClick={handleWhatsAppRedirect}
           className="w-full py-3 rounded-lg font-semibold text-white bg-green-600 hover:bg-green-700 transition"
         >
-          Add Amount
+          Withdraw Amount
         </button>
       </div>
     </div>
   );
 };
 
-export default AddMoney;
+export default UWithdrawTokens;

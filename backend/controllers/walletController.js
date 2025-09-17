@@ -14,8 +14,8 @@ export const getAllTokens = async (req, res) => {
 
 // Add tokens to wallet
 export const addTokens = async (req, res) => {
-  const { userId } = req.params;
-  console.log("userId123", userId);
+  const { mobile } = req.params;
+  console.log("userId123", mobile);
   try {
     const { tokens , remark } = req.body;
 
@@ -31,14 +31,14 @@ export const addTokens = async (req, res) => {
       return res.status(400).json({ message: "Remark is required" });
     }
 
-    const user = await User.findById(userId);
+    const user = await User.findOne({ mobile });
     console.log(user);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     const token = new Token({
-      userId,
+      userId : user._id,
       amount: tokens,
       remark,
       type: "add",
@@ -56,7 +56,7 @@ export const addTokens = async (req, res) => {
 
 export const removeTokens = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { mobile } = req.params;
     const { tokens , remark } = req.body;
 
     if (!tokens || tokens <= 0) {
@@ -69,7 +69,7 @@ export const removeTokens = async (req, res) => {
       return res.status(400).json({ message: "Remark is required" });
     }
 
-    const user = await User.findById(userId);
+    const user = await User.findOne({ mobile });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -79,7 +79,7 @@ export const removeTokens = async (req, res) => {
     }
 
     const token = new Token({
-      userId,
+      userId : user._id,
       amount: tokens,
       remark,
       type: "remove",

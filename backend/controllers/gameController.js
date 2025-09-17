@@ -1,17 +1,36 @@
 // controllers/resultController.js
+import mongoose from "mongoose";
 import Game from "../models/addGame.js";
 import Result from "../models/result.js";
 import Bet from "../models/placeBet.js";
 import User from "../models/User.js";
 
 const multipliers = {
-  singleDigit: 9,
-  jodi: 90,
+  singleDigit: 10,
+  jodi: 100,
   singlePana: 160,
   doublePana: 320,
   triplePana: 900,
   halfSangam: 1500,
-  fullSangam: 90000,
+  fullSangam: 10000,
+};
+
+const convertToMongoDate = (timeString) => {
+  if (!timeString) return null;
+
+  const [hours, minutes] = timeString.split(":").map(Number);
+
+  const now = new Date(); // today's date
+  const date = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    hours,
+    minutes,
+    0 // seconds
+  );
+
+  return date;
 };
 
 // Utility: sum last digit
@@ -29,7 +48,6 @@ const formatTime = (timeString) => {
   return `${hours}:${minutes} ${meridian.toUpperCase()}`;
 };
 
-
 export const getAllGames = async (req, res) => {
   try {
     const games = await Game.find();
@@ -39,11 +57,12 @@ export const getAllGames = async (req, res) => {
     res.status(500).json({ error: "Server error while fetching games" });
   }
 };
+
 export const getGame = async (req, res) => {
   const { id } = req.params;
   try {
     const game = await Game.findById(id);
-    console.log("findGame", game)
+    console.log("findGame", game);
     if (!game) return res.status(404).json({ message: "Game not found" });
     res.json(game);
   } catch (error) {
@@ -51,8 +70,6 @@ export const getGame = async (req, res) => {
     res.status(500).json({ error: "Server error while fetching game" });
   }
 };
-
-
 
 export const updateGameTime = async (req, res) => {
   const { selectedGameId } = req.params;
@@ -176,11 +193,11 @@ export async function processBets(gameId, type) {
       if (bet.betType === "singleDigit") {
         if (bet.marketType === "open" && openResult) {
           const last = getLastDigitSum(openResult.value);
-          if (bet.digits == last) isWinner = true;
+          if (bet.digits.toString() === last.toString()) isWinner = true;
         }
         if (bet.marketType === "close" && closeResult) {
           const last = getLastDigitSum(closeResult.value);
-          if (bet.digits == last) isWinner = true;
+          if (bet.digits.toString() === last.toString()) isWinner = true;
         }
       }
 
@@ -190,42 +207,41 @@ export async function processBets(gameId, type) {
           getLastDigitSum(openResult.value).toString() +
           getLastDigitSum(closeResult.value).toString();
 
-        if (bet.digits === jodi) isWinner = true;
+        if (bet.digits.toString() === jodi) isWinner = true;
       }
 
       // ---------- SINGLE / DOUBLE / TRIPLE PANA ----------
       if (["singlePana", "doublePana", "triplePana"].includes(bet.betType)) {
-  const res = bet.marketType === "open" ? openResult : closeResult;
-  if (res) {
-    const resultStr = result.value.join("");
+        const res = bet.marketType === "open" ? openResult : closeResult;
+        if (res) {
+          const resultStr = result.value.join("");
 
-    if (bet.betType === "singlePana") {
-      // check if result contains the digit anywhere
-      if (resultStr.includes(bet.digits.toString())) {
-        isWinner = true;
+          if (bet.betType === "singlePana") {
+            // check if result contains the digit anywhere
+            if (resultStr.includes(bet.digits.toString())) {
+              isWinner = true;
+            }
+          }
+
+          if (bet.betType === "doublePana") {
+            // check if the result contains the two-digit sequence
+            if (resultStr.includes(bet.digits.toString())) {
+              isWinner = true;
+            }
+          }
+
+          if (bet.betType === "triplePana") {
+            // check if all digits are equal and match user input
+            if (
+              resultStr.length === 3 &&
+              resultStr.split("").every((d) => d === resultStr[0]) &&
+              resultStr === bet.digits.toString()
+            ) {
+              isWinner = true;
+            }
+          }
+        }
       }
-    }
-
-    if (bet.betType === "doublePana") {
-      // check if the result contains the two-digit sequence
-      if (resultStr.includes(bet.digits.toString())) {
-        isWinner = true;
-      }
-    }
-
-    if (bet.betType === "triplePana") {
-      // check if all digits are equal and match user input
-      if (
-        resultStr.length === 3 &&
-        resultStr.split("").every((d) => d === resultStr[0]) &&
-        resultStr === bet.digits.toString()
-      ) {
-        isWinner = true;
-      }
-    }
-  }
-}
-
 
       // ---------- HALF SANGAM ----------
       if (bet.betType === "halfSangam" && openResult && closeResult) {
@@ -250,11 +266,11 @@ export async function processBets(gameId, type) {
         if (bet.digits === openStr + closeStr) isWinner = true;
       }
 
-      console.log("before if" , isWinner);
+      console.log("before if", isWinner);
 
       // ---------- SETTLEMENT ----------
       if (isWinner) {
-              console.log("after if" , isWinner);
+        console.log("after if", isWinner);
 
         winningAmount = bet.points * (multipliers[bet.betType] || 1);
         await User.findByIdAndUpdate(bet.user, {
@@ -267,7 +283,7 @@ export async function processBets(gameId, type) {
         bet.status = "lost";
         bet.winningAmount = 0;
       }
-      console.log("last bet" , bet)
+      console.log("last bet", bet);
       await bet.save();
     }
 
@@ -276,6 +292,122 @@ export async function processBets(gameId, type) {
     );
   } catch (err) {
     console.error("❌ Error in processBets:", err.message);
-    console.log("error gameController")
+    console.log("error gameController");
   }
 }
+
+
+export const getResultsDatewise = async (req, res) => {
+  const { gameId } = req.query; // 👈 take from query string
+
+  console.log(gameId);
+
+  if (!gameId) {
+    return res.status(400).json({ message: "gameId is required" });
+  }
+
+  try {
+    const results = await Result.aggregate([
+      {
+        $match: {
+          gameId: new mongoose.Types.ObjectId(gameId),
+        },
+      },
+      {
+        $addFields: {
+          resultDate: {
+            $dateToString: { format: "%d-%m-%Y", date: "$scheduledTime" },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: { date: "$resultDate" },
+          gameName: { $first: "$gameName" },
+          open: {
+            $max: {
+              $cond: [{ $eq: ["$type", "open"] }, "$value", null],
+            },
+          },
+          close: {
+            $max: {
+              $cond: [{ $eq: ["$type", "close"] }, "$value", null],
+            },
+          },
+        },
+      },
+      { $sort: { "_id.date": -1 } },
+    ]);
+
+    console.log("object", results);
+
+    res.status(200).json(results);
+  } catch (err) {
+    console.error("Error fetching results:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+export const showGamesToUsers = async (req, res) => {
+  try {
+    const { toShow } = req.body;
+    const { selectedGame } = req.params;
+    console.log(toShow, selectedGame);
+    if (typeof toShow !== "boolean") {
+      return res.status(400).json({ error: "toShow must be a boolean" });
+    };
+
+    const updatedGame = await Game.findByIdAndUpdate(
+      selectedGame,
+      { showToUsers : toShow },
+      { new: true }
+    );
+    res.json(updatedGame);
+  } catch (err) {
+    res.status(500).json({ error: "Error updating game visibility" });
+  }
+};
+
+
+export const addGame = async (req, res) => {
+  try {
+    const { name, openingTime, closingTime, openDigits, closeDigits, showToUsers, isPersonal } = req.body;
+
+    if (!name || !openingTime || !closingTime || !openDigits || !closeDigits) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    // Ensure digits are arrays of 3 numbers
+    if (openDigits.length !== 3 || closeDigits.length !== 3) {
+      return res.status(400).json({ message: "Open and Close digits must contain exactly 3 numbers." });
+    }
+
+    const newGame = new Game({
+      name: name.toUpperCase(),
+      openingTime : convertToMongoDate(openingTime),
+      closingTime : convertToMongoDate(closingTime),
+      openDigits,
+      closeDigits,
+      showToUsers: showToUsers ?? true,
+      isPersonal: isPersonal ?? false,
+    });
+
+    const savedGame = await newGame.save();
+    res.status(201).json(savedGame);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error. Could not save game." });
+  }
+}
+
+export const deleteGame = async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    await Game.findByIdAndDelete(gameId);
+    console.log("Deleting game with ID:", gameId);
+    res.status(204).send();
+  } catch (err) {
+    console.error("Error deleting game:", err);
+    res.status(500).json({ message: "Server error. Could not delete game." });
+  }
+};

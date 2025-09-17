@@ -6,20 +6,25 @@ import PlaceBet from './pages/PlaceBet';
 import AddToken from './components/AddToken';
 import Header from './components/Header';
 import ApaymentHistory from './pages/ApaymentHistory';
+import ABetHistory from './pages/ABetHistory';
 import RemoveToken from './components/RemoveToken';
 import UpdateTime from './pages/UpdateTime';
 import AddTokenHistory from './pages/AddTokenHistory';
 import RemoveTokenHistory from './pages/RemoveTokenHistory';
+import PrivateRoute from './context/PrivateRoutes';
+import HideGames from './components/HideGames';
+import AddGame from './components/AddGame';
+import RemoveGame from './components/RemoveGame';
 
 function App() {
   return (
     <>
 
     <Header />
-   
       <Routes>
-        <Route path="/" element={<AHome />} />
         <Route path="/login" element={<LoginForm />} />
+      <Route element={<PrivateRoute />}>
+        <Route path="/" element={<AHome />} />
         <Route path="/users" element={<AllPlayers/>} />
         <Route path="/removeToken" element={<RemoveToken/>} />
         <Route path="/bet" element={<PlaceBet/>} />
@@ -28,6 +33,12 @@ function App() {
         <Route path="/updateTime" element={<UpdateTime/>} />
         <Route path="/addTokenHistory" element={<AddTokenHistory/>} />
         <Route path="/removeTokenHistory" element={<RemoveTokenHistory/>} />
+        <Route path="/betHistory" element={<ABetHistory/>} />
+        <Route path="/hideGames" element={<HideGames/>} />
+        <Route path="/addGame" element={<AddGame/>} />
+        <Route path="/removeGame" element={<RemoveGame/>} />
+        </Route>
+        <Route path="*" element={<div className='text-center mt-20'>404 | Page Not Found</div>} />
       </Routes>
     </>
   );

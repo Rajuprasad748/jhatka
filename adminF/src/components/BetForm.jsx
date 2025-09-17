@@ -15,7 +15,7 @@ const BetForm = () => {
       try {
         setLoading(true);
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/games`
+          `${import.meta.env.VITE_API_BASE_URL}/allGames`
         );
         setGames(res.data);
       } catch (error) {

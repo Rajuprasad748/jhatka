@@ -3,10 +3,10 @@ import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 
 const RemoveToken = () => {
-  const [userId, setUserId] = useState("");
+  const [mobile, setMobile] = useState(""); // ✅ now we use mobile instead of userId
   const [user, setUser] = useState(null);
   const [tokens, setTokens] = useState("");
-  const [remark, setRemark] = useState("Tokens removed successfully!"); // ✅ new state
+  const [remark, setRemark] = useState("Tokens removed successfully!");
   const [message, setMessage] = useState("");
   const [confirmDialog, setConfirmDialog] = useState(false);
   const [animatedBalance, setAnimatedBalance] = useState(0);
@@ -35,38 +35,46 @@ const RemoveToken = () => {
     }
   }, [user?.walletBalance]);
 
-  // Fetch user by ID
+  // Fetch user by mobile
   const fetchUser = async () => {
+    if (!mobile) {
+      setMessage("Please enter a mobile number");
+      return;
+    }
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/findUser/${userId}`
+        `${import.meta.env.VITE_API_BASE_URL}/findUser/${mobile}`
       );
       setUser(res.data);
       setMessage("");
     } catch (error) {
       setUser(null);
-      setMessage(error.message || "Error fetching user");
+      setMessage(error.response?.data?.message || "Error fetching user");
     }
   };
 
-  // Remove tokens from wallet (after confirmation)
+  // Remove tokens
   const handleRemoveTokens = async () => {
     if (!tokens || isNaN(tokens)) {
       setMessage("Please enter a valid number of tokens");
       return;
     }
+    if (!user) {
+      setMessage("Please fetch a user first.");
+      return;
+    }
     try {
       const res = await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/removeTokens/${userId}`,
-        { tokens: Number(tokens), remark } // ✅ sending remark
+        `${import.meta.env.VITE_API_BASE_URL}/removeTokens/${mobile}`, // ✅ use mobile
+        { tokens: Number(tokens), remark }
       );
       setUser(res.data);
       setTokens("");
-      setRemark("Tokens removed successfully!"); // ✅ reset default
+      setRemark("Tokens removed successfully!");
       setMessage("Tokens removed successfully!");
-      setConfirmDialog(false); // close dialog
+      setConfirmDialog(false);
     } catch (error) {
-      setMessage(error.message || "Error removing tokens");
+      setMessage(error.response?.data?.message || "Error removing tokens");
     }
   };
 
@@ -74,12 +82,12 @@ const RemoveToken = () => {
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg">
       <h2 className="text-2xl font-bold mb-4 text-center">Remove Tokens</h2>
 
-      {/* User ID input */}
+      {/* Mobile input */}
       <input
         type="text"
-        placeholder="Enter the User ID"
-        value={userId}
-        onChange={(e) => setUserId(e.target.value)}
+        placeholder="Enter mobile number"
+        value={mobile}
+        onChange={(e) => setMobile(e.target.value)}
         className="w-full px-4 py-2 mb-2 border rounded-lg"
       />
       <button
@@ -92,12 +100,8 @@ const RemoveToken = () => {
       {/* Show user details */}
       {user && (
         <div className="mb-4 p-4 bg-gray-100 rounded-lg text-sm sm:text-base">
-          <p>
-            <strong>Name:</strong> {user.name}
-          </p>
-          <p>
-            <strong>Contact:</strong> {user.mobile}
-          </p>
+          <p><strong>Name:</strong> {user.name}</p>
+          <p><strong>Contact:</strong> {user.mobile}</p>
           <p>
             <strong>Wallet Balance:</strong>{" "}
             <span className="font-bold text-green-600">{animatedBalance}</span>
@@ -108,17 +112,14 @@ const RemoveToken = () => {
       {/* Remark + Remove tokens input */}
       {user && (
         <>
-          {/* Remark textarea (responsive + fixed length) */}
           <textarea
             value={remark}
             onChange={(e) => setRemark(e.target.value)}
-            maxLength={100} // ✅ limit characters
-            rows={2} // ✅ responsive-friendly height
+            maxLength={100}
+            rows={2}
             className="w-full px-4 py-2 mb-2 border rounded-lg resize-none"
             placeholder="Enter remark"
           />
-        
-          {/* Tokens input */}
           <input
             type="number"
             placeholder="Enter tokens to remove"
@@ -139,9 +140,7 @@ const RemoveToken = () => {
       {confirmDialog && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 px-4">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-sm p-6">
-            <h3 className="text-xl font-semibold mb-4 text-center">
-              Confirm Removal
-            </h3>
+            <h3 className="text-xl font-semibold mb-4 text-center">Confirm Removal</h3>
             <p className="text-gray-600 text-center mb-4">
               Are you sure you want to remove{" "}
               <strong>{tokens}</strong> tokens from{" "}

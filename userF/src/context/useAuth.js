@@ -6,3 +6,4 @@ export default AuthContext;
 
 // Custom hook
 export const useAuth = () => useContext(AuthContext);
+

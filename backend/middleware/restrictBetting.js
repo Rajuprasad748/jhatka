@@ -33,6 +33,10 @@ export const restrictBetting = async (req, res, next) => {
         name: new RegExp(`^${req.params.name}$`, "i"),
       });
     }
+    // Example Express.js check
+    if (new Date() >= new Date(game.closingTime)) {
+      return res.status(400).json({ error: "Betting closed for this game" });
+    }
 
     if (!game) {
       return res.status(404).json({ error: "Game not found" });
@@ -41,7 +45,9 @@ export const restrictBetting = async (req, res, next) => {
     if (isRestricted(game.openingTime, game.closingTime)) {
       return res
         .status(403)
-        .json({ error: "Betting is disabled 15 min before and after results." });
+        .json({
+          error: "Betting is disabled 15 min before and after results.",
+        });
     }
 
     // attach game to request for downstream handlers

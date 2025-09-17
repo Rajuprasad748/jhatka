@@ -6,7 +6,7 @@ import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import cookieParser from "cookie-parser";
 import { initScheduler } from "./services/scheduler.js";
-
+import { adminAuthMiddleware } from "./middleware/adminAuthMiddleware.js";
 
 dotenv.config();
 
@@ -35,7 +35,7 @@ app.use(cookieParser());
 
 // Routes (e.g., /api/users)
 app.use("/api/users", userRoutes);
-app.use("/api/admin", adminRoutes);
+app.use("/api/admin" ,  adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 connectDB().then(() => {

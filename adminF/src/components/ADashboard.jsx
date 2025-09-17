@@ -7,42 +7,46 @@ const ADashboard = () => {
   {
     title: 'All Players',
     Link: '/users',
-    img: 'https://dummyimage.com/420x260',
   },
   {
     title: 'Place Bet',
     Link: '/bet',
-    img: 'https://dummyimage.com/421x261',
   },
   {
     title: 'Update Time',
     Link: '/updateTime',
-    img: 'https://dummyimage.com/422x262',
   },
   {
     title: 'Bet History',
     Link: '/betHistory',
-    img: 'https://dummyimage.com/423x263',
   },
   {
     title: 'Add Tokens',
     Link: '/addToken',
-    img: 'https://dummyimage.com/424x264',
   },
   {
     title: 'Remove Tokens',
     Link: '/removeToken',
-    img: 'https://dummyimage.com/425x265',
   },
   {
     title: 'Add Token History',
     Link: '/addTokenHistory',
-    img: 'https://dummyimage.com/427x267',
   },
   {
     title: 'Remove Token History',
     Link: '/removeTokenHistory',
-    img: 'https://dummyimage.com/428x268',
+  },
+  {
+    title: 'Hide Games',
+    Link: '/hideGames',
+  },
+  {
+    title: 'Add Game',
+    Link: '/addGame',
+  },
+  {
+    title: 'Remove Game',
+    Link: '/removeGame',
   },
 ];
 

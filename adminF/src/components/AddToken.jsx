@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
 const AddToken = () => {
-  const [userId, setUserId] = useState("");
+  const [mobile, setMobile] = useState(""); // ✅ changed from userId → mobile
   const [user, setUser] = useState(null);
   const [tokens, setTokens] = useState("");
-  const [remark, setRemark] = useState("Tokens added successfully!"); // ✅ new state
+  const [remark, setRemark] = useState("Tokens added successfully!");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState(false);
@@ -32,17 +32,19 @@ const AddToken = () => {
     }
   }, [user?.walletBalance]);
 
-  // Fetch user by ID
+  // Fetch user by mobile
   const fetchUser = async () => {
-    if (!userId) {
-      setMessage("Please enter a User ID");
+    if (!mobile) {
+      setMessage("Please enter a mobile number");
       return;
     }
     setLoading(true);
     try {
+      console.log(" searching for mobile:", mobile);
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/findUser/${userId}`
+        `${import.meta.env.VITE_API_BASE_URL}/findUser/${mobile}` // ✅ new endpoint
       );
+      console.log(res.data)
       setUser(res.data);
       setMessage("");
     } catch (error) {
@@ -66,12 +68,12 @@ const AddToken = () => {
     setLoading(true);
     try {
       const res = await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/addTokens/${userId}`,
-        { tokens: Number(tokens), remark } // ✅ sending remark too
+        `${import.meta.env.VITE_API_BASE_URL}/addTokens/${mobile}`, // ✅ new endpoint
+        { tokens: Number(tokens), remark }
       );
       setUser(res.data);
       setTokens("");
-      setRemark("Token added successfully!"); // reset to default
+      setRemark("Tokens added successfully!");
       setMessage("Tokens added successfully!");
       setConfirmDialog(false);
     } catch (error) {
@@ -85,12 +87,12 @@ const AddToken = () => {
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg">
       <h2 className="text-2xl font-bold mb-4 text-center">Add Tokens</h2>
 
-      {/* User ID input */}
+      {/* Mobile input */}
       <input
         type="text"
-        placeholder="Enter the User ID"
-        value={userId}
-        onChange={(e) => setUserId(e.target.value)}
+        placeholder="Enter the Mobile Number"
+        value={mobile}
+        onChange={(e) => setMobile(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && fetchUser()}
         className="w-full px-4 py-2 mb-2 border rounded-lg"
       />
@@ -117,7 +119,6 @@ const AddToken = () => {
       {/* Remark + Add tokens input */}
       {user && (
         <>
-          {/* Remark input */}
           <textarea
             placeholder="Enter remark"
             value={remark}
@@ -126,8 +127,6 @@ const AddToken = () => {
             rows={2}
             className="w-full px-4 py-2 mb-2 border rounded-lg resize-none"
           />
-
-          {/* Tokens input */}
           <input
             type="number"
             placeholder="Enter tokens to add"

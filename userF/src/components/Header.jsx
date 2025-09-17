@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaHome, FaWallet, FaUserPlus, FaSignOutAlt } from "react-icons/fa";
+import { FaHome, FaWallet, FaUserPlus, FaSignOutAlt, FaHeadset } from "react-icons/fa"; // ✅ Add FaHeadset
 import { useAuth } from "../context/useAuth"; // ✅ import your context hook
 
 function Header() {
@@ -11,7 +11,7 @@ function Header() {
 
   const handleLogout = async () => {
     try {
-      await logout(); // ✅ call context logout
+      await logout();
       setShowConfirm(false);
       navigate("/login");
     } catch (err) {
@@ -33,13 +33,13 @@ function Header() {
           </Link>
 
           {/* Center Title with animated gradient */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 hidden sm:block">
+          <div className="absolute left-1/2 transform -translate-x-1/2 hidden lg:block">
             <span className="text-lg sm:text-xl md:text-3xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-yellow-500 to-blue-500 animate-gradient bg-[length:300%_300%]">
               RoyalMoney9x.com
             </span>
           </div>
 
-          {/* Right: Wallet + Login/Logout */}
+          {/* Right: Wallet + Support + Login/Logout */}
           <div className="flex items-center gap-4 text-sm sm:gap-6 sm:text-base">
             {!loading && user && (
               <span className="flex items-center gap-1 hover:text-gray-300 text-sm sm:text-base">
@@ -47,10 +47,20 @@ function Header() {
               </span>
             )}
 
+            {/* ✅ Customer Support Link */}
+            <Link
+              to="/customerSupport"
+              aria-label="Customer Support"
+              className="flex items-center gap-1 hover:text-gray-300"
+            >
+              <FaHeadset className="text-lg" />
+              <span className="hidden sm:inline">Support</span>
+            </Link>
+
             {!loading &&
               (user ? (
                 <button
-                  onClick={() => setShowConfirm(true)} // 🔥 open confirm dialog
+                  onClick={() => setShowConfirm(true)}
                   aria-label="Logout"
                   className="flex items-center gap-1 hover:text-gray-300"
                 >
