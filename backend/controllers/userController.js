@@ -103,18 +103,17 @@ export const logoutUser = (req, res) => {
 };
 
 export const verifyUser = (req, res) => {
+  console.log("object of userController" , req.user);
   res.json({ isLoggedIn: true, user: req.user });
 };
 
+
 export const getTokenHistory = async (req, res) => {
 
-  console.log("funtion")
   try {
     console.log("object" , req.user)
     const userId = req.user._id;
-    console.log(userId)
     const history = await Token.find({ userId }).sort({ createdAt: -1 });
-    console.log("history" , history)
     res.json(history);
   } catch (error) {
     console.error("Error fetching token history:", error);

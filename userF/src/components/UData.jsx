@@ -4,7 +4,9 @@ import axios from "axios";
 import { AiFillHeart } from "react-icons/ai";
 import { GiAmphora } from "react-icons/gi";
 import { BiRefresh } from "react-icons/bi";
-
+import { CiPause1 } from "react-icons/ci";
+import { CiPlay1 } from "react-icons/ci";
+import { MdDateRange } from "react-icons/md";
 // 🔹 Skeleton for banner
 const BannerSkeleton = () => (
   <div className="animate-pulse">
@@ -93,14 +95,35 @@ const UData = () => {
 
   // Determine game status
   const getGameStatus = (openingTime, closingTime) => {
-    const now = new Date();
-    const open = new Date(openingTime);
-    const close = new Date(closingTime);
+  const now = new Date();
 
-    if (now < open) return "beforeOpen"; // can bet both
-    if (now >= open && now < close) return "afterOpen"; // can bet close only
-    return "closed"; // both passed
-  };
+  // convert current time to minutes in the day
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  // parse input times
+  const open = new Date(openingTime);
+  const close = new Date(closingTime);
+
+  const openMinutes = open.getHours() * 60 + open.getMinutes();
+  const closeMinutes = close.getHours() * 60 + close.getMinutes();
+
+  if (closeMinutes > openMinutes) {
+    // ✅ Normal case: open & close on the same day
+    if (nowMinutes < openMinutes) return "beforeOpen";
+    if (nowMinutes >= openMinutes && nowMinutes < closeMinutes) return "afterOpen";
+    return "closed";
+  } else {
+    // ✅ Overnight case: e.g., open 23:30 → close 00:30
+    if (nowMinutes < openMinutes && nowMinutes >= closeMinutes) {
+      return "beforeOpen"; // still before opening tonight
+    }
+    if (nowMinutes >= openMinutes || nowMinutes < closeMinutes) {
+      return "afterOpen"; // we're in the overnight open window
+    }
+    return "closed";
+  }
+};
+
 
   return (
     <div className="bg-gray-900 min-h-screen text-white">
@@ -123,13 +146,13 @@ const UData = () => {
           <BannerSkeleton />
         ) : (
           <div className="text-center bg-red-600 text-white py-3 px-4 rounded-lg text-base sm:text-lg">
-            <Link
+            {/* <Link
               to="/personalGame"
               className="hover:underline animate-blink"
               state={{ personalGames: gameData.filter((g) => g.isPersonal) }}
             >
               To earn more, play this game. Click here
-            </Link>
+            </Link> */}
           </div>
         )}
 
@@ -163,8 +186,7 @@ const UData = () => {
 
             const openDigitsStr = openDigits?.join("") || "";
             const closeDigitsStr = closeDigits?.join("") || "";
-            const midDigits =
-              getLastDigitOfSum(openDigits) + getLastDigitOfSum(closeDigits);
+            const midDigits = getLastDigitOfSum(openDigits) + getLastDigitOfSum(closeDigits);
             const status = getGameStatus(openingTime, closingTime);
 
             return (
@@ -186,7 +208,7 @@ const UData = () => {
                     state={{ game: item }}
                     className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-600 text-white hover:bg-gray-500 transition"
                   >
-                    <AiFillHeart className="text-lg" />
+                    <MdDateRange className="text-2xl" />
                   </Link>
 
                   {/* Name + Digits */}
@@ -200,7 +222,7 @@ const UData = () => {
                   {/* Right Icon → Betting availability */}
                   {status === "closed" ? (
                     <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-600 text-gray-300 cursor-not-allowed">
-                      <GiAmphora className="text-lg" />
+                      <CiPlay1 className="text-2xl" />
                     </div>
                   ) : (
                     <Link
@@ -209,7 +231,7 @@ const UData = () => {
                       aria-label={`View ${name} game`}
                       className="w-10 h-10 flex items-center justify-center rounded-full bg-yellow-400 text-black hover:bg-yellow-300 transition"
                     >
-                      <GiAmphora className="text-lg" />
+                      <CiPause1 className="text-2xl" />
                     </Link>
                   )}
                 </div>

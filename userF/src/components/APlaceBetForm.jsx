@@ -6,35 +6,85 @@ import { betOptions, betTypeMap, getDisabledState } from "../utils/betUtils.js";
 
 const APlaceBetForm = () => {
   const location = useLocation();
-  const { game } = location.state || {};
   const navigate = useNavigate();
+
+  const { game } = location.state || {};
   const { user, updateUser } = useAuth();
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const [selectedOption, setSelectedOption] = useState(betOptions[0].name);
+
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
     session: "open",
     digits: {},
     points: "",
   });
+
   const [disabled, setDisabled] = useState({
     openDisabled: false,
     closeDisabled: false,
     submitDisabled: false,
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const currentOption = betOptions.find((o) => o.name === selectedOption);
+
+  // ------------------ Required Length ------------------
+  const getRequiredLength = (optionName, label, session) => {
+    if (optionName === "Single Pana") return 1;
+    if (optionName === "Double Pana") return 2;
+    if (optionName === "Triple Pana") return 3;
+
+    if (optionName === "Half Sangam") {
+      if (label === "Open Digit") return session === "open" ? 3 : 1;
+      if (label === "Close Pana") return session === "open" ? 1 : 3;
+    }
+
+    if (optionName === "Full Sangam") {
+      return 3; // usually 3 digits for both
+    }
+
+    return 1; // default
+  };
+
+  // ------------------ Reset Digits on Option Change ------------------
+  // ------------------ Reset Digits on Option/Session Change ------------------
+  useEffect(() => {
+    if (!currentOption) return;
+
+    // Reset digits based on new option
+    const newDigits = {};
+    currentOption.parts.forEach((part, idx) => {
+      newDigits[`part-${idx}`] = "";
+    });
+
+    setFormData((prev) => ({
+      ...prev,
+      digits: newDigits,
+    }));
+  }, [selectedOption, formData.session, currentOption]);
+  // 🔹 runs when bet type OR session changes
 
   // ------------------ Check Disabled ------------------
   const checkDisabled = useCallback(() => {
     if (!game) return;
-    const { openDisabled, closeDisabled, submitDisabled, adjustedOption, session } =
-      getDisabledState(game, selectedOption, formData.session);
+    const {
+      openDisabled,
+      closeDisabled,
+      submitDisabled,
+      adjustedOption,
+      session,
+    } = getDisabledState(game, selectedOption, formData.session);
 
     setDisabled({ openDisabled, closeDisabled, submitDisabled });
-    setSelectedOption(adjustedOption);
+
+    // ✅ Only update if valid
+    if (betOptions.some((o) => o.name === adjustedOption)) {
+      setSelectedOption(adjustedOption);
+    }
+
     setFormData((prev) => ({ ...prev, session }));
   }, [game, selectedOption, formData.session]);
 
@@ -45,18 +95,13 @@ const APlaceBetForm = () => {
   }, [checkDisabled]);
 
   // ------------------ Input Change ------------------
-  const getFieldLength = (label) => {
-    if (selectedOption === "Half Sangam") {
-      if (label === "Open Digit") return formData.session === "open" ? 3 : 1;
-      if (label === "Close Pana") return formData.session === "open" ? 1 : 3;
-    }
-    return currentOption.parts.find((p) => p.label === label)?.len || 1;
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name.startsWith("part-")) {
-      const len = getFieldLength(currentOption.parts[parseInt(name.split("-")[1])].label);
+      const partIndex = parseInt(name.split("-")[1]);
+      const label = currentOption.parts[partIndex].label;
+      const len = getRequiredLength(selectedOption, label, formData.session);
+
       const numericValue = value.replace(/\D/g, "").slice(0, len);
       setFormData((prev) => ({
         ...prev,
@@ -70,7 +115,6 @@ const APlaceBetForm = () => {
     }
   };
 
-
   // ------------------ Submit ------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -83,29 +127,23 @@ const APlaceBetForm = () => {
     }
     setError("");
 
-    const option = betOptions.find((o) => o.name === selectedOption);
+    // 🔹 Validate all parts with getRequiredLength
+    for (let i = 0; i < currentOption.parts.length; i++) {
+      const partName = `part-${i}`;
+      const label = currentOption.parts[i].label;
 
-    // Digit Validation
-    if (selectedOption === "Half Sangam") {
-      const openLen = formData.session === "open" ? 3 : 1;
-      const closeLen = formData.session === "open" ? 1 : 3;
+      const requiredLen = getRequiredLength(
+        selectedOption,
+        label,
+        formData.session
+      );
 
-      if (!formData.digits["part-0"] || formData.digits["part-0"].length !== openLen) {
-        setError(`Enter exactly ${openLen} digits for Open Digit`);
+      if (
+        !formData.digits[partName] ||
+        formData.digits[partName].length !== requiredLen
+      ) {
+        setError(`Enter exactly ${requiredLen} digits for ${label}`);
         return;
-      }
-      if (!formData.digits["part-1"] || formData.digits["part-1"].length !== closeLen) {
-        setError(`Enter exactly ${closeLen} digits for Close Pana`);
-        return;
-      }
-    } else {
-      for (let i = 0; i < option.parts.length; i++) {
-        const partName = `part-${i}`;
-        const requiredLen = option.parts[i].len;
-        if (!formData.digits[partName] || formData.digits[partName].length !== requiredLen) {
-          setError(`Enter exactly ${requiredLen} digits for ${option.parts[i].label}`);
-          return;
-        }
       }
     }
 
@@ -130,13 +168,23 @@ const APlaceBetForm = () => {
       );
 
       if (res.data.walletBalance !== undefined) {
-        updateUser((prev) => ({ ...prev, walletBalance: res.data.walletBalance }));
+        updateUser((prev) => ({
+          ...prev,
+          walletBalance: res.data.walletBalance,
+        }));
       }
       alert("Bet submitted successfully!");
-      setFormData({ date: new Date().toISOString().split("T")[0], session: "open", digits: {}, points: "" });
+      setFormData({
+        date: new Date().toISOString().split("T")[0],
+        session: "open",
+        digits: {},
+        points: "",
+      });
       navigate("/");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to place bet. Try again.");
+      setError(
+        err.response?.data?.message || "Failed to place bet. Try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -153,7 +201,9 @@ const APlaceBetForm = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 sm:px-6">
       <div className="w-full max-w-md sm:max-w-lg bg-white shadow-xl rounded-3xl p-6 sm:p-8">
-        <h2 className="text-center font-bold text-2xl sm:text-3xl mb-6 text-gray-800">{game.name} - Place Bet</h2>
+        <h2 className="text-center font-bold text-2xl sm:text-3xl mb-6 text-gray-800">
+          {game.name} - Place Bet
+        </h2>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Session */}
           <div className="flex gap-6 justify-center mb-4">
@@ -207,7 +257,7 @@ const APlaceBetForm = () => {
           </select>
 
           {/* Digits Input */}
-          {currentOption.parts.map((part, idx) => (
+          {currentOption?.parts?.map((part, idx) => (
             <input
               key={idx}
               type="text"
@@ -234,7 +284,9 @@ const APlaceBetForm = () => {
 
           {/* Submit */}
           {disabled.submitDisabled ? (
-            <p className="text-center text-red-600 font-semibold mt-4">Closed for today</p>
+            <p className="text-center text-red-600 font-semibold mt-4">
+              Closed for today
+            </p>
           ) : (
             <button
               type="submit"

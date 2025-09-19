@@ -1,30 +1,43 @@
 // middleware/restrictBetting.js
 import Game from "../models/addGame.js";
 
+// Convert HH:MM of a Date into minutes since midnight
+const toMinutes = (date) => date.getHours() * 60 + date.getMinutes();
+
+// Check if a time falls inside a window, handling midnight wrap
+const inWindow = (time, start, end) => {
+  if (start <= end) {
+    return time >= start && time <= end;
+  } else {
+    // overnight case
+    return time >= start || time <= end;
+  }
+};
+
+// Restriction: 15 min before/after open/close
 const isRestricted = (openingTime, closingTime) => {
   const now = new Date();
+  const nowMinutes = toMinutes(now);
 
-  const open = new Date(openingTime);
-  const close = new Date(closingTime);
+  const openMinutes = toMinutes(openingTime);
+  const closeMinutes = toMinutes(closingTime);
 
-  const openRestrictedStart = new Date(open.getTime() - 15 * 60 * 1000);
-  const openRestrictedEnd = new Date(open.getTime() + 15 * 60 * 1000);
-
-  const closeRestrictedStart = new Date(close.getTime() - 15 * 60 * 1000);
-  const closeRestrictedEnd = new Date(close.getTime() + 15 * 60 * 1000);
+  const openStart = (openMinutes - 15 + 1440) % 1440;
+  const openEnd = (openMinutes + 15) % 1440;
+  const closeStart = (closeMinutes - 15 + 1440) % 1440;
+  const closeEnd = (closeMinutes + 15) % 1440;
 
   return (
-    (now >= openRestrictedStart && now <= openRestrictedEnd) ||
-    (now >= closeRestrictedStart && now <= closeRestrictedEnd)
+    inWindow(nowMinutes, openStart, openEnd) ||
+    inWindow(nowMinutes, closeStart, closeEnd)
   );
 };
 
-// ✅ Middleware function
+// Middleware
 export const restrictBetting = async (req, res, next) => {
   try {
     const { gameId } = req.body || req.params;
 
-    // find game either by ID (for placing bets) or by name (for game details)
     let game;
     if (gameId) {
       game = await Game.findById(gameId);
@@ -33,25 +46,41 @@ export const restrictBetting = async (req, res, next) => {
         name: new RegExp(`^${req.params.name}$`, "i"),
       });
     }
-    // Example Express.js check
-    if (new Date() >= new Date(game.closingTime)) {
-      return res.status(400).json({ error: "Betting closed for this game" });
-    }
+
+    console.log("object of gameId", game);
 
     if (!game) {
       return res.status(404).json({ error: "Game not found" });
     }
 
-    if (isRestricted(game.openingTime, game.closingTime)) {
-      return res
-        .status(403)
-        .json({
-          error: "Betting is disabled 15 min before and after results.",
-        });
+    // Extract times as minutes
+    const nowMinutes = toMinutes(new Date());
+    const openMinutes = toMinutes(new Date(game.openingTime));
+    const closeMinutes = toMinutes(new Date(game.closingTime));
+
+    // Betting closed after closeTime daily
+    let isClosed;
+    if (openMinutes < closeMinutes) {
+      // normal case
+      isClosed = nowMinutes >= closeMinutes;
+    } else {
+      // overnight case
+      isClosed = !inWindow(nowMinutes, openMinutes, closeMinutes);
     }
 
-    // attach game to request for downstream handlers
+    if (isClosed) {
+      return res.status(400).json({ error: "Betting closed for this game" });
+    }
+
+    // Restriction window
+    if (isRestricted(game.openingTime, game.closingTime)) {
+      return res.status(403).json({
+        error: "Betting disabled 15 min before/after results.",
+      });
+    }
+
     req.game = game;
+    console.log("object of restrictBetting", game);
     next();
   } catch (err) {
     console.error("Restriction check error:", err);

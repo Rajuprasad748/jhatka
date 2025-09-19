@@ -13,7 +13,8 @@ export const allUsers = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-}
+};
+
 
 export const adminLogout = async (req, res) => {
   try {
@@ -53,6 +54,7 @@ export const adminLogin = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 export const verifyAdmin = async (req, res) => {
   try {

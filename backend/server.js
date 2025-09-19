@@ -5,8 +5,6 @@ import connectDB from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import cookieParser from "cookie-parser";
-import { initScheduler } from "./services/scheduler.js";
-import { adminAuthMiddleware } from "./middleware/adminAuthMiddleware.js";
 
 dotenv.config();
 
@@ -41,6 +39,5 @@ const PORT = process.env.PORT || 5000;
 connectDB().then(() => {
   app.listen(PORT,"0.0.0.0", () => {
     console.log(`🚀 Server running on port ${PORT}`);
-    initScheduler();  // ✅ scheduler starts only when DB is ready
   });
 });

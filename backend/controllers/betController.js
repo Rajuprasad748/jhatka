@@ -13,7 +13,9 @@ export const placeBet = async (req, res) => {
     }
 
     // user is injected from verifyToken middleware
-    const userId = req.user.id;
+    const userId = req.user._id;
+
+    console.log("object of userId", userId);
 
     // ✅ Find user
     const user = await User.findById(userId);
@@ -59,6 +61,7 @@ export const placeBet = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 export const getBetHistory = async (req, res) => {
   try {

@@ -54,6 +54,7 @@ export const addTokens = async (req, res) => {
   }
 };
 
+//Remove tokens from wallet
 export const removeTokens = async (req, res) => {
   try {
     const { mobile } = req.params;
