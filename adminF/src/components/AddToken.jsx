@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const AddToken = () => {
-  const [mobile, setMobile] = useState(""); // ✅ changed from userId → mobile
+  const [mobile, setMobile] = useState(""); 
   const [user, setUser] = useState(null);
   const [tokens, setTokens] = useState("");
   const [remark, setRemark] = useState("Tokens added successfully!");
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState(false);
   const [animatedBalance, setAnimatedBalance] = useState(0);
@@ -35,21 +36,21 @@ const AddToken = () => {
   // Fetch user by mobile
   const fetchUser = async () => {
     if (!mobile) {
-      setMessage("Please enter a mobile number");
+      toast.error("Please enter a mobile number");
       return;
     }
     setLoading(true);
     try {
-      console.log(" searching for mobile:", mobile);
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/findUser/${mobile}` // ✅ new endpoint
+        `${import.meta.env.VITE_API_BASE_URL}/findUser/${mobile}`
       );
-      console.log(res.data)
       setUser(res.data);
-      setMessage("");
+      toast.success("User found successfully!");
     } catch (error) {
       setUser(null);
-      setMessage(error.response?.data?.message || error.message || "Error fetching user");
+      toast.error(
+        error.response?.data?.message || error.message || "Error fetching user"
+      );
     } finally {
       setLoading(false);
     }
@@ -58,26 +59,28 @@ const AddToken = () => {
   // Add tokens with remark
   const handleAddTokens = async () => {
     if (!tokens || isNaN(tokens)) {
-      setMessage("Please enter a valid number of tokens");
+      toast.error("Please enter a valid number of tokens");
       return;
     }
     if (!user) {
-      setMessage("Please fetch a user first.");
+      toast.error("Please fetch a user first.");
       return;
     }
     setLoading(true);
     try {
       const res = await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/addTokens/${mobile}`, // ✅ new endpoint
+        `${import.meta.env.VITE_API_BASE_URL}/addTokens/${mobile}`,
         { tokens: Number(tokens), remark }
       );
       setUser(res.data);
       setTokens("");
       setRemark("Tokens added successfully!");
-      setMessage("Tokens added successfully!");
+      toast.success("Tokens added successfully!");
       setConfirmDialog(false);
     } catch (error) {
-      setMessage(error.response?.data?.message || error.message || "Error adding tokens");
+      toast.error(
+        error.response?.data?.message || error.message || "Error adding tokens"
+      );
     } finally {
       setLoading(false);
     }
@@ -85,6 +88,7 @@ const AddToken = () => {
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg">
+      <ToastContainer position="top-right" autoClose={3000} />
       <h2 className="text-2xl font-bold mb-4 text-center">Add Tokens</h2>
 
       {/* Mobile input */}
@@ -171,17 +175,6 @@ const AddToken = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Message */}
-      {message && (
-        <p
-          className={`mt-4 text-center text-sm font-medium ${
-            message.includes("successfully") ? "text-green-600" : "text-red-600"
-          }`}
-        >
-          {message}
-        </p>
       )}
     </div>
   );

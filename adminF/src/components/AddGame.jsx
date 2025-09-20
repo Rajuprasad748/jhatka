@@ -1,5 +1,6 @@
 import axios from "axios";
 import React, { useState } from "react";
+import { toast } from "react-toastify";
 
 const AddGame = () => {
   const [formData, setFormData] = useState({
@@ -33,7 +34,7 @@ const AddGame = () => {
     setShowModal(true);
   };
 
-  const confirmSubmit = () => {
+  const confirmSubmit = async () => {
     setShowModal(false);
 
     // ✅ Convert digits properly into an array of numbers
@@ -50,14 +51,14 @@ const AddGame = () => {
       closeDigits: formatDigits(formData.closeDigits),
     };
 
-    console.log("Submitting game:", payload);
     try {
-      const res = axios.post(
+      await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/addGame`,
         payload
       );
-      console.log(res);
-    } catch (error) {
+      toast.success("Game added successfully!");
+      } catch (error) {
+        toast.error("Login failed. Please try again.");
       console.error("Error submitting game:", error);
     }
   };

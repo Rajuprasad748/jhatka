@@ -32,7 +32,7 @@ const TokenHistory = () => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-slate-200 rounded-xl shadow p-4 mt-8">
+    <div className="w-full max-w-md mx-auto rounded-xl shadow p-4 mt-8">
       <h2 className="text-lg font-semibold mb-3">Token History</h2>
 
       {loading ? (
@@ -56,11 +56,11 @@ const TokenHistory = () => {
 
               {/* Right side: Amount */}
               <span
-                className={`font-semibold ${
+                className={`font-bold ${
                   item.type === "add" ? "text-green-600" : "text-red-600"
                 }`}
               >
-                {item.type === "add" ? "+" : "-"}₹{item.amount}
+                {item.type === "add" ? "+" : "-"}{item.amount}
               </span>
             </div>
           ))}

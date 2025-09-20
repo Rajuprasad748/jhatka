@@ -11,11 +11,7 @@ function GameRates() {
 
   return (
     <div className="w-full max-w-sm mx-auto p-4 sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl sm:p-6 md:p-8">
-      {/* Title */}
-      <h1 className="text-lg font-bold text-center mb-4 sm:text-xl md:text-2xl lg:text-3xl sm:mb-6 md:mb-8 text-gray-900">
-        Game Rates
-      </h1>
-
+  
       {/* List */}
       <ul className="space-y-2 sm:space-y-3 md:space-y-4">
         {rates.map((item, index) => (

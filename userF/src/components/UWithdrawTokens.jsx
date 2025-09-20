@@ -21,14 +21,14 @@ const UWithdrawTokens = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 sm:p-8 space-y-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-center text-gray-800">
+      <div className="w-full max-w-md bg-gray-800 text-white rounded-2xl shadow-lg p-6 sm:p-8 space-y-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-center">
           Withdraw Tokens
         </h2>
 
         {/* Preset buttons */}
         <div>
-          <p className="text-sm text-gray-500 mb-2">Select an amount:</p>
+          <p className="text-sm text-gray-300 mb-2">Select an amount:</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {presetAmounts.map((amt) => (
               <button
@@ -38,7 +38,7 @@ const UWithdrawTokens = () => {
                 className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition ${
                   parseInt(amount) === amt
                     ? "bg-blue-600 text-white"
-                    : "bg-gray-200 hover:bg-gray-300"
+                    : "bg-gray-200 text-black hover:bg-gray-300"
                 }`}
               >
                 ₹{amt}

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const BetForm = () => {
   const [games, setGames] = useState([]);
@@ -7,7 +9,6 @@ const BetForm = () => {
   const [type, setType] = useState("open");
   const [digits, setDigits] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const [showConfirm, setShowConfirm] = useState(false); // 👈 modal state
 
   useEffect(() => {
@@ -19,8 +20,7 @@ const BetForm = () => {
         );
         setGames(res.data);
       } catch (error) {
-        console.error("Error fetching games:", error);
-        setMessage("⚠️ Failed to fetch games");
+        toast.error(`⚠️ ${error.response?.data?.message || "Failed to fetch games"}`);
       } finally {
         setLoading(false);
       }
@@ -39,11 +39,10 @@ const BetForm = () => {
       );
 
       setGames(games.map((g) => (g._id === res.data._id ? res.data : g)));
-      setMessage("✅ Updated successfully!");
+      toast.success("✅ Updated successfully!");
       setDigits("");
     } catch (err) {
-      console.error(err);
-      setMessage("❌ Update failed");
+      toast.error(`⚠️ ${err.response?.data?.message || "Update failed"}`);
     } finally {
       setLoading(false);
     }
@@ -52,7 +51,7 @@ const BetForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!selectedGame || !digits) {
-      return setMessage("⚠️ Please select a game and enter digits");
+      return toast.warning("⚠️ Please select a game and enter digits");
     }
     // 👇 open modal instead of direct submit
     setShowConfirm(true);
@@ -60,6 +59,7 @@ const BetForm = () => {
 
   return (
     <div className="p-4 max-w-lg mx-auto flex flex-col mt-8">
+      <ToastContainer position="top-right" autoClose={3000} />
       <h2 className="text-xl font-bold text-center mb-4 text-gray-800">
         Update Game Digits
       </h2>
@@ -124,10 +124,6 @@ const BetForm = () => {
         >
           {loading ? "Updating..." : "Update"}
         </button>
-
-        {message && (
-          <p className="text-center text-sm mt-2 text-gray-700">{message}</p>
-        )}
       </form>
 
       {/* Live Data Display */}

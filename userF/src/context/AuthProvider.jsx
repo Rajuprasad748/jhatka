@@ -13,7 +13,6 @@ export const AuthProvider = ({ children }) => {
       const res = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/users/verify`
       );
-      console.log("object of res.data", res.data);
       setUser(res.data.user);
     } catch {
       setUser(null);

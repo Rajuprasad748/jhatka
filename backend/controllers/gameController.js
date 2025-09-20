@@ -133,6 +133,8 @@ export const updateGameTime = async (req, res) => {
     const game = await Game.findById(selectedGameId);
     if (!game) return res.status(404).json({ message: "Game not found" });
 
+    console.log("objects of" ,  openingTime , closingTime);
+
     if (openingTime) {
       game.openingTime = normalizeAndConvertTime(openingTime);
     }

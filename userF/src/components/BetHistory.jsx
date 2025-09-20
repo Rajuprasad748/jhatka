@@ -46,23 +46,23 @@ const BetHistory = () => {
         </p>
       ) : (
         <div className="space-y-3">
-          {bets.map((bet, index) => (
+          {bets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((bet, index) => (
             <div
               key={index}
-              className="border border-gray-200 bg-slate-200 rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center hover:shadow-md transition-shadow"
+              className="border border-gray-200 bg-gray-800 text-white rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center hover:shadow-md transition-shadow"
             >
               {/* Left Section */}
               <div className="flex flex-col space-y-1 text-sm sm:text-base">
-                <span className="text-gray-900 font-medium">
+                <span className=" font-medium">
                   🎮 {bet.gameName}
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs">
                   {formatDate(bet.createdAt)}
                 </span>
-                <span className="text-xs sm:text-sm text-gray-600 capitalize">
+                <span className="text-xs sm:text-sm capitalize">
                   Type: {bet.betType} ({bet.marketType})
                 </span>
-                <span className="text-xs sm:text-sm text-gray-600">
+                <span className="text-xs sm:text-sm ">
                   Digits: {bet.digits}
                 </span>
               </div>
