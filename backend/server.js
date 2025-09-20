@@ -10,7 +10,7 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = ["http://localhost:5173", "http://localhost:5174"];
+const allowedOrigins = ["https://userfrontend-vpmj.onrender.com", "https://adminfrontend-zcij.onrender.com"];
 
 app.use(
   cors({
