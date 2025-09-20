@@ -15,7 +15,7 @@ const RemoveGame = () => {
       setError("");
       try {
         const { data } = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/allGames`,
+          `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`,
           { withCredentials: true }
         );
         setGames(data);
@@ -36,7 +36,7 @@ const RemoveGame = () => {
     console.log("object", selectedGame)
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API_BASE_URL}/deleteGame/${selectedGame}`,
+        `${import.meta.env.VITE_API_BASE_URL}/admin/deleteGame/${selectedGame}`,
         { withCredentials: true }
       );
       setGames(games.filter((g) => g._id !== selectedGame));

@@ -42,7 +42,7 @@ const AddToken = () => {
     setLoading(true);
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/findUser/${mobile}`
+        `${import.meta.env.VITE_API_BASE_URL}/admin/findUser/${mobile}`
       );
       setUser(res.data);
       toast.success("User found successfully!");
@@ -69,7 +69,7 @@ const AddToken = () => {
     setLoading(true);
     try {
       const res = await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/addTokens/${mobile}`,
+        `${import.meta.env.VITE_API_BASE_URL}/admin/addTokens/${mobile}`,
         { tokens: Number(tokens), remark }
       );
       setUser(res.data);

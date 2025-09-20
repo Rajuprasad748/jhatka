@@ -55,7 +55,7 @@ const UpdateTime = () => {
   const fetchGames = async () => {
     try {
       const { data } = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/allGames`
+        `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`
       );
       setGames(data);
     } catch (err) {
@@ -71,7 +71,7 @@ const UpdateTime = () => {
 
       try {
         const { data } = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/games/${selectedGame}`
+          `${import.meta.env.VITE_API_BASE_URL}/admin/games/${selectedGame}`
         );
 
         if (data.openingTime) {
@@ -123,7 +123,7 @@ const UpdateTime = () => {
     try {
       setLoading(true);
       await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/games/updateTime/${selectedGame}`,
+        `${import.meta.env.VITE_API_BASE_URL}/admin/games/updateTime/${selectedGame}`,
         {
           openingTime: formattedOpening,
           closingTime: formattedClosing,

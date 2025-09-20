@@ -43,7 +43,7 @@ const RemoveToken = () => {
     }
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/findUser/${mobile}`
+        `${import.meta.env.VITE_API_BASE_URL}/admin/findUser/${mobile}`
       );
       setUser(res.data);
       setMessage("");
@@ -65,7 +65,7 @@ const RemoveToken = () => {
     }
     try {
       const res = await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/removeTokens/${mobile}`, // ✅ use mobile
+        `${import.meta.env.VITE_API_BASE_URL}/admin/removeTokens/${mobile}`, // ✅ use mobile
         { tokens: Number(tokens), remark }
       );
       setUser(res.data);

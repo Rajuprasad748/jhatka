@@ -14,7 +14,7 @@ export const AdminAuthProvider = ({ children }) => {
   const login = async ({ mobile, password }) => {
     try {
       setError(null);
-      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/login`, { mobile, password });
+      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/admin/login`, { mobile, password });
       setAdmin(res.data.admin);
       console.log("auth admin" , res.data.admin)
       return res.data.admin;
@@ -27,7 +27,7 @@ export const AdminAuthProvider = ({ children }) => {
   // ✅ Logout
   const logout = async () => {
     try {
-      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/logout`);
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/admin/logout`);
       setAdmin(null);
     } catch (err) {
       setError(err.response?.data?.message || "Logout failed");
@@ -37,7 +37,7 @@ export const AdminAuthProvider = ({ children }) => {
   // ✅ Check current session on refresh
   const checkAuth = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/verify` , {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/verify` , {
         withCredentials: true
       });
       setAdmin(res.data.admin);

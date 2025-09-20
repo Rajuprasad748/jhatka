@@ -12,7 +12,7 @@ const ABetHistory = () => {
     const fetchGames = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/allGames`
+          `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`
         );
         setGames(res.data);
       } catch (err) {
@@ -28,7 +28,7 @@ const ABetHistory = () => {
     setLoading(true);
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/getResultDatewise?gameId=${game._id}`
+        `${import.meta.env.VITE_API_BASE_URL}/admin/getResultDatewise?gameId=${game._id}`
       );
       setResults(res.data);
     } catch (err) {

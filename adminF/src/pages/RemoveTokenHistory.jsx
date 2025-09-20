@@ -12,7 +12,7 @@ const RemoveTokenHistory = () => {
   const fetchTokenHistory = async () => {
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/tokenHistory`
+        `${import.meta.env.VITE_API_BASE_URL}/admin/tokenHistory`
       );
       const tokens = res.data;
 

@@ -11,7 +11,7 @@ const TokenHistory = () => {
 
   const fetchTokenHistory = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/tokenHistory`);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/tokenHistory`);
       const addTokens = res.data;
 
       // Filter only "add" tokens

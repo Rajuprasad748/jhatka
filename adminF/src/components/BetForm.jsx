@@ -16,7 +16,7 @@ const BetForm = () => {
       try {
         setLoading(true);
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/allGames`
+          `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`
         );
         setGames(res.data);
       } catch (error) {
@@ -34,7 +34,7 @@ const BetForm = () => {
     try {
       setLoading(true);
       const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/set-result/${selectedGame}`,
+        `${import.meta.env.VITE_API_BASE_URL}/admin/set-result/${selectedGame}`,
         { type, value: digits }
       );
 

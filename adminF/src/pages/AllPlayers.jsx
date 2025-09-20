@@ -8,7 +8,7 @@ const AllPlayers = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/all-users`);
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/all-users`);
         setUsers(res.data);
       } catch (err) {
         console.error("Failed to fetch users:", err);
