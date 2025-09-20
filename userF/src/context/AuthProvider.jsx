@@ -11,7 +11,9 @@ export const AuthProvider = ({ children }) => {
   const fetchUser = async () => {
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/users/verify`
+        `${import.meta.env.VITE_API_BASE_URL}/users/verify` , {
+          withCredentials: true,
+        }
       );
       setUser(res.data.user);
     } catch {
