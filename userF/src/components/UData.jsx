@@ -126,9 +126,9 @@ const UData = () => {
 
 
   return (
-    <div className="bg-gray-900 min-h-screen text-white">
+    <div className="bg-gray-900 min-h-screen text-white rounded-xl">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-gray-800 p-4 shadow text-center text-lg sm:text-2xl font-bold text-yellow-400 border-b border-gray-700 flex items-center justify-center gap-4">
+      <header className="sticky top-0 z-10 bg-gray-800 p-4 shadow text-center text-lg sm:text-2xl font-bold text-yellow-400 border-b border-gray-700 flex items-center justify-center gap-4 rounded-xl">
         <span>MAIN RESULT</span>
         <button
           onClick={handleRefresh}
@@ -192,7 +192,7 @@ const UData = () => {
             return (
               <div
                 key={_id}
-                className="bg-gray-800 border border-gray-700 rounded-xl p-4 shadow-md space-y-3"
+                className="bg-gray-800 border border-gray-700 rounded-xl p-4 shadow-md space-y-1"
               >
                 {/* Time Row */}
                 <div className="text-xs sm:text-sm text-center text-gray-400">
