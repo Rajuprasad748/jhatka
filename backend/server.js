@@ -10,7 +10,7 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = ["https://userfrontend-vpmj.onrender.com", "https://adminfrontend-zcij.onrender.com"];
+const allowedOrigins = [`${process.env.USER_FRONTEND_URL}`, `${process.env.ADMIN_FRONTEND_URL}`];
 
 app.use(
   cors({
@@ -40,4 +40,8 @@ connectDB().then(() => {
   app.listen(PORT,"0.0.0.0", () => {
     console.log(`🚀 Server running on port ${PORT}`);
   });
+});
+
+app.get("/", (req, res) => {
+  res.send("API is running...");
 });

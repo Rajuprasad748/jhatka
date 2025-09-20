@@ -1,11 +1,9 @@
 import {  Routes, Route } from 'react-router-dom';
-import AHome from './pages/AHome';
 import LoginForm from './components/LoginForm';
 import AllPlayers from './pages/AllPlayers';
 import PlaceBet from './pages/PlaceBet';
 import AddToken from './components/AddToken';
 import Header from './components/Header';
-import ApaymentHistory from './pages/ApaymentHistory';
 import ABetHistory from './pages/ABetHistory';
 import RemoveToken from './components/RemoveToken';
 import UpdateTime from './pages/UpdateTime';
@@ -15,6 +13,7 @@ import PrivateRoute from './context/PrivateRoutes';
 import HideGames from './components/HideGames';
 import AddGame from './components/AddGame';
 import RemoveGame from './components/RemoveGame';
+import ADashboard from './components/ADashboard';
 
 function App() {
   return (
@@ -24,12 +23,11 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginForm />} />
       <Route element={<PrivateRoute />}>
-        <Route path="/" element={<AHome />} />
+        <Route path="/" element={<ADashboard />} />
         <Route path="/users" element={<AllPlayers/>} />
         <Route path="/removeToken" element={<RemoveToken/>} />
         <Route path="/bet" element={<PlaceBet/>} />
         <Route path="/addToken" element={<AddToken/>} />
-        <Route path="/paymenthistory" element={<ApaymentHistory/>} />
         <Route path="/updateTime" element={<UpdateTime/>} />
         <Route path="/addTokenHistory" element={<AddTokenHistory/>} />
         <Route path="/removeTokenHistory" element={<RemoveTokenHistory/>} />

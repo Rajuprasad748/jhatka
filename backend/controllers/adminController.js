@@ -44,7 +44,11 @@ export const adminLogin = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.cookie("token", token, { httpOnly: true });
+    res.cookie("token", token, { 
+      httpOnly: true 
+      // secure: process.env.NODE_ENV === "production", // Uncomment this in production
+      // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax" // Uncomment this in production
+    });
 
     res.json({
       success: true,
