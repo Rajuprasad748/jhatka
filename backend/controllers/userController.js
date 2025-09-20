@@ -1,30 +1,32 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import Token from "../models/token.model.js";
-import { findUserByMobile } from "../services/user.services.js";
 import { GenerateToken } from "../services/user.services.js";
 
 export const registerUser = async (req, res) => {
   try {
     const { name, mobile, email, password } = req.body;
 
-    // Check required fields
+    // 1. Validate input
     if (!name || !mobile || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
-
-    // Check if user already exists
-    const userExists = await findUserByMobile(mobile);
+    // 2. Check if user already exists
+    const userExists = await User.findOne({ mobile });
     if (userExists) {
       return res
-        .status(400)
-        .json({ message: "User already exists with this mobile number" });
+      .status(400)
+      .json({ message: "User already exists with this mobile number" });
     }
-
-    // Hash password
+    
+    console.log("Registering user:", { name, mobile, email });
+    // 3. Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
+    // Debug log (don’t log raw password in production!)
+    console.log("Registering user:", { name, mobile, email });
+
+    // 4. Save user in DB
     const user = await User.create({
       name,
       mobile,
@@ -32,10 +34,11 @@ export const registerUser = async (req, res) => {
       password: hashedPassword,
     });
 
-    // Generate token
+    // 5. Generate token
     const token = GenerateToken(user);
 
-    res.json({
+    // 6. Send response
+    res.status(201).json({
       token,
       user: {
         id: user._id,
@@ -45,7 +48,7 @@ export const registerUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error in registerUser:", error.message);
+    console.error("❌ Error in registerUser:", error.message);
     res.status(500).json({ message: "Server Error" });
   }
 };

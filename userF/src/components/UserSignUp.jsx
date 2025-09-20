@@ -20,13 +20,15 @@ const UserSignUp = () => {
       return;
     }
 
-    try {
-      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/users/register`, {
+    const data = {
         name,
         mobile,
         email,
         password,
-      });
+      }
+
+    try {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/users/register`, data);
 
       toast.success("Registration successful!");
       setName("");

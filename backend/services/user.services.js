@@ -16,7 +16,7 @@ export const findUserById = async (req, res) => {
 };
 
 export const findUserByMobile = async (req, res) => {
-  const { mobile } = req.params;
+  const { mobile } = req.params ;
   const user = await User.findOne({ mobile });
   console.log(" user received:", user);
   if (!user) {
