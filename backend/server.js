@@ -10,7 +10,7 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = [`https://userfrontend-xnvv.onrender.com`, `https://jhatkabackend.onrender.com/`];
+const allowedOrigins = [`https://userfrontend-xnvv.onrender.com`, `https://jhatkabackend.onrender.com`];
 
 app.use(
   cors({
@@ -22,6 +22,8 @@ app.use(
       }
     },
     credentials: true, // allow cookies
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // include OPTIONS
+    allowedHeaders: ["Content-Type", "Authorization"],    // add needed headers
   })
 );
 
