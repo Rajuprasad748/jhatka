@@ -53,6 +53,7 @@ export const registerUser = async (req, res) => {
   }
 };
 
+
 export const loginUser = async (req, res) => {
   try {
     const { mobile, password } = req.body;
