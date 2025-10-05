@@ -10,7 +10,7 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = [`https://userfrontend-xnvv.onrender.com`, `https://royal10xadmin.onrender.com/`];
+const allowedOrigins = [`https://userfrontend-xnvv.onrender.com`, `https://royal10xadmin.onrender.com`];
 
 app.use(
   cors({
