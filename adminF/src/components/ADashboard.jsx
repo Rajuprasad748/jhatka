@@ -48,6 +48,10 @@ const ADashboard = () => {
     title: 'Remove Game',
     Link: '/removeGame',
   },
+  {
+    title: 'Contact Info',
+    Link: '/contactInfo',
+  },
 ];
 
 

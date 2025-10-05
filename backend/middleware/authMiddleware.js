@@ -13,15 +13,11 @@ export const authMiddleware = async (req, res, next) => {
     }
 
     // ✅ Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    console.log("decode" , decoded)
-    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);    
 
     // ✅ Attach user to request
     req.user = await User.findById(decoded.id).select("-password");
 
-    console.log("requser" , req.user)
 
     if (!req.user) {
       return res.status(401).json({ message: "User not found" });

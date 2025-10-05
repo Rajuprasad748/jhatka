@@ -1,6 +1,7 @@
 import express from 'express';
 import { findAllUsers, findUserByMobile } from '../services/user.services.js';
 import { adminLogin , adminLogout , verifyAdmin} from '../controllers/adminController.js';
+import { getContactInfo, updateContactField } from '../controllers/contactController.js';
 import { getAllGames, setAndProcessResult , updateGameTime ,  getGame , getResultsDatewise , showGamesToUsers , addGame , deleteGame} from '../controllers/gameController.js';
 import { addTokens , removeTokens , getAllTokens } from '../controllers/walletController.js';
 import { adminAuthMiddleware } from '../middleware/adminAuthMiddleware.js';
@@ -9,6 +10,10 @@ const router = express.Router();
 
 router.get('/all-users', findAllUsers);
 router.get('/findUser/:mobile', findUserByMobile);
+
+
+router.get('/contactInfo', getContactInfo);
+router.get('/updateContactInfo', updateContactField);
 
 
 

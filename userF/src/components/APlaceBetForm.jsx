@@ -33,9 +33,18 @@ const APlaceBetForm = () => {
 
   // ------------------ Required Length ------------------
   const getRequiredLength = (optionName, label, session) => {
-    if (optionName === "Single Pana") return 1;
-    if (optionName === "Double Pana") return 2;
-    if (optionName === "Triple Pana") return 3;
+    if (
+      optionName === "Single Pana" ||
+      optionName === "Double Pana" ||
+      optionName === "Triple Pana"
+    ) {
+      return 3;
+    }
+
+    // 🔹 Jodi requires 2 digits
+    if (optionName === "Jodi") {
+      return 2;
+    }
 
     if (optionName === "Half Sangam") {
       if (label === "Open Digit") return session === "open" ? 3 : 1;
@@ -43,18 +52,16 @@ const APlaceBetForm = () => {
     }
 
     if (optionName === "Full Sangam") {
-      return 3; // usually 3 digits for both
+      return 3;
     }
 
-    return 1; // default
+    return 1;
   };
 
-  // ------------------ Reset Digits on Option Change ------------------
   // ------------------ Reset Digits on Option/Session Change ------------------
   useEffect(() => {
     if (!currentOption) return;
 
-    // Reset digits based on new option
     const newDigits = {};
     currentOption.parts.forEach((part, idx) => {
       newDigits[`part-${idx}`] = "";
@@ -65,7 +72,6 @@ const APlaceBetForm = () => {
       digits: newDigits,
     }));
   }, [selectedOption, formData.session, currentOption]);
-  // 🔹 runs when bet type OR session changes
 
   // ------------------ Check Disabled ------------------
   const checkDisabled = useCallback(() => {
@@ -80,7 +86,6 @@ const APlaceBetForm = () => {
 
     setDisabled({ openDisabled, closeDisabled, submitDisabled });
 
-    // ✅ Only update if valid
     if (betOptions.some((o) => o.name === adjustedOption)) {
       setSelectedOption(adjustedOption);
     }
@@ -121,13 +126,12 @@ const APlaceBetForm = () => {
     if (disabled.submitDisabled) return;
 
     const pointsValue = parseInt(formData.points, 10);
-    if (!pointsValue || pointsValue < 10 || pointsValue > 10000) {
-      setError("Points must be between 10 and 10,000");
+    if (!pointsValue || pointsValue < 50 || pointsValue > 10000) {
+      setError("Points must be between 50 and 10,000");
       return;
     }
     setError("");
 
-    // 🔹 Validate all parts with getRequiredLength
     for (let i = 0; i < currentOption.parts.length; i++) {
       const partName = `part-${i}`;
       const label = currentOption.parts[i].label;
@@ -152,7 +156,7 @@ const APlaceBetForm = () => {
       gameId: game._id,
       betType: betTypeMap[selectedOption],
       date: new Date(formData.date),
-      marketType: formData.session,
+      marketType: formData.session, // 🧩 Modified
       digits: Object.values(formData.digits).join("-"),
       points: pointsValue,
     };
@@ -161,10 +165,19 @@ const APlaceBetForm = () => {
 
     try {
       setLoading(true);
+
+      // 🔹 Added: Token from localStorage
+      const token = localStorage.getItem("token");
+
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/users/place-bet`,
         payload,
-        { withCredentials: true }
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       if (res.data.walletBalance !== undefined) {
@@ -173,6 +186,7 @@ const APlaceBetForm = () => {
           walletBalance: res.data.walletBalance,
         }));
       }
+
       alert("Bet submitted successfully!");
       setFormData({
         date: new Date().toISOString().split("T")[0],
@@ -204,34 +218,37 @@ const APlaceBetForm = () => {
         <h2 className="text-center font-bold text-2xl sm:text-3xl mb-6 text-gray-800">
           {game.name} - Place Bet
         </h2>
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Session */}
-          <div className="flex gap-6 justify-center mb-4">
-            <label className="flex items-center gap-2 text-gray-700">
-              <input
-                type="radio"
-                name="session"
-                value="open"
-                checked={formData.session === "open"}
-                disabled={disabled.openDisabled}
-                onChange={handleChange}
-                className="w-4 h-4 accent-blue-600"
-              />
-              Open
-            </label>
-            <label className="flex items-center gap-2 text-gray-700">
-              <input
-                type="radio"
-                name="session"
-                value="close"
-                checked={formData.session === "close"}
-                disabled={disabled.closeDisabled}
-                onChange={handleChange}
-                className="w-4 h-4 accent-blue-600"
-              />
-              Close
-            </label>
-          </div>
+          {/* 🧩 Hide Open/Close if Jodi */}
+          {selectedOption !== "Jodi" && (
+            <div className="flex gap-6 justify-center mb-4">
+              <label className="flex items-center gap-2 text-gray-700">
+                <input
+                  type="radio"
+                  name="session"
+                  value="open"
+                  checked={formData.session === "open"}
+                  disabled={disabled.openDisabled}
+                  onChange={handleChange}
+                  className="w-4 h-4 accent-blue-600"
+                />
+                Open
+              </label>
+              <label className="flex items-center gap-2 text-gray-700">
+                <input
+                  type="radio"
+                  name="session"
+                  value="close"
+                  checked={formData.session === "close"}
+                  disabled={disabled.closeDisabled}
+                  onChange={handleChange}
+                  className="w-4 h-4 accent-blue-600"
+                />
+                Close
+              </label>
+            </div>
+          )}
 
           {/* Bet Type */}
           <select
@@ -273,16 +290,16 @@ const APlaceBetForm = () => {
           <input
             type="text"
             name="points"
+            min="50"
+            max="10000"
             value={formData.points}
             onChange={handleChange}
-            placeholder="Points (10-10000)"
+            placeholder="Points (50-10000)"
             className="p-3 border rounded-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
-          {/* Error */}
           {error && <p className="text-red-600 text-center mt-1">{error}</p>}
 
-          {/* Submit */}
           {disabled.submitDisabled ? (
             <p className="text-center text-red-600 font-semibold mt-4">
               Closed for today

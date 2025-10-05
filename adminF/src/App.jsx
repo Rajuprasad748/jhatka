@@ -14,6 +14,7 @@ import HideGames from './components/HideGames';
 import AddGame from './components/AddGame';
 import RemoveGame from './components/RemoveGame';
 import ADashboard from './components/ADashboard';
+import UpdateContactInfo from './components/UpdateContactInfo';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
         <Route path="/hideGames" element={<HideGames/>} />
         <Route path="/addGame" element={<AddGame/>} />
         <Route path="/removeGame" element={<RemoveGame/>} />
+        <Route path="/contactInfo" element={<UpdateContactInfo/>} />
         </Route>
         <Route path="*" element={<div className='text-center mt-20'>404 | Page Not Found</div>} />
       </Routes>

@@ -223,7 +223,6 @@ export const setAndProcessResult = async (req, res) => {
   try {
     const { type, value } = req.body; // type = "open" | "close"
     const { gameId } = req.params;
-    console.log("all:" , type , value , gameId);
 
     if (!type || !["open", "close"].includes(type)) {
       return res.status(400).json({ message: "Invalid or missing type" });
@@ -235,24 +234,21 @@ export const setAndProcessResult = async (req, res) => {
     const game = await Game.findById(gameId);
     if (!game) return res.status(404).json({ message: "Game not found" });
 
-    // Compare only HH:mm of the stored game time (if you want to strictly enforce)
-    const gameTime = type === "open" ? getTimeOnly(game.openingTime) : getTimeOnly(game.closingTime);
+    const gameTime =
+      type === "open" ? getTimeOnly(game.openingTime) : getTimeOnly(game.closingTime);
     const now = new Date();
-    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
+      now.getMinutes()
+    ).padStart(2, "0")}`;
 
-    console.log("object of game time" , gameTime , currentTime);
+    console.log("object of game time", gameTime, currentTime);
 
-    // Warn if mismatch — but still allow publishing (remove this check if you want strict enforcement)
     if (gameTime && currentTime !== gameTime) {
       console.warn(`⚠️ Publishing ${type} result at ${currentTime}, scheduled for ${gameTime}`);
     }
 
-    // Ensure digits saved as array of numbers (e.g., "123" => [1,2,3])
     const digits = value.split("").map((d) => Number(d));
 
-    console.log("object of before game")
-
-    // Save result as published immediately and add scheduledTime for backward compatibility
     const resultDoc = new Result({
       gameId: new mongoose.Types.ObjectId(gameId),
       gameName: game.name,
@@ -260,23 +256,21 @@ export const setAndProcessResult = async (req, res) => {
       value: digits,
       published: true,
       publishedAt: now,
-      scheduledTime: now, // keep previous field name if other parts rely on it
+      scheduledTime: now,
     });
 
     await resultDoc.save();
 
-    if(type === "open"){
-        await Game.findByIdAndUpdate(gameId, { 
-          openDigits : digits
-        });
-    }else{
-        await Game.findByIdAndUpdate(gameId, { 
-          closeDigits : digits
-        });
+    if (type === "open") {
+      await Game.findByIdAndUpdate(gameId, {
+        openDigits: digits,
+      });
+    } else {
+      await Game.findByIdAndUpdate(gameId, {
+        closeDigits: digits,
+      });
     }
 
-
-    // Fetch opposite result if needed for combinations
     const openResult =
       type === "open"
         ? resultDoc
@@ -286,26 +280,39 @@ export const setAndProcessResult = async (req, res) => {
         ? resultDoc
         : await Result.findOne({ gameId, type: "close", published: true });
 
-    // Fetch only pending bets for this game
     const bets = await Bet.find({ gameId, status: "pending" });
     if (!bets || bets.length === 0) {
       return res.json({ message: "Result declared, no bets to process", result: resultDoc });
     }
 
     const bulkBetOps = [];
-    const userIncrements = new Map(); // map userId -> amount to increment
+    const userIncrements = new Map();
+
+    // 🔹 Helper for new PANA logic
+    function checkPanaWin(userInput, answer, panaType) {
+      if (userInput.length !== 3 || answer.length !== 3) return false;
+
+      let matchedPositions = 0;
+      for (let i = 0; i < 3; i++) {
+        if (userInput[i] === answer[i]) matchedPositions++;
+      }
+
+      if (panaType === "singlePana") return matchedPositions >= 1;
+      if (panaType === "doublePana") return matchedPositions >= 2;
+      if (panaType === "triplePana") return matchedPositions === 3;
+      return false;
+    }
 
     for (const bet of bets) {
       let isWinner = false;
       let winningAmount = 0;
-
-      const betDigitsStr = String(bet.digits); // normalize for comparisons
+      const betDigitsStr = String(bet.digits);
 
       // SINGLE DIGIT
       if (bet.betType === "singleDigit") {
         const resForMarket = bet.marketType === "open" ? openResult : closeResult;
         if (resForMarket) {
-          const last = getLastDigitSum(resForMarket.value); // string
+          const last = getLastDigitSum(resForMarket.value);
           if (betDigitsStr === last) isWinner = true;
         }
       }
@@ -317,23 +324,13 @@ export const setAndProcessResult = async (req, res) => {
         if (betDigitsStr === jodi) isWinner = true;
       }
 
-      // PANA: singlePana / doublePana / triplePana
+      // 🔹 NEW PANA LOGIC
       if (["singlePana", "doublePana", "triplePana"].includes(bet.betType)) {
         const resForMarket = bet.marketType === "open" ? openResult : closeResult;
         if (resForMarket) {
           const resultStr = resForMarket.value.join("");
-          if (bet.betType === "singlePana") {
-            if (resultStr.includes(betDigitsStr)) isWinner = true;
-          } else if (bet.betType === "doublePana") {
-            if (resultStr.includes(betDigitsStr)) isWinner = true;
-          } else if (bet.betType === "triplePana") {
-            if (
-              resultStr.length === 3 &&
-              resultStr.split("").every((d) => d === resultStr[0]) &&
-              resultStr === betDigitsStr
-            ) {
-              isWinner = true;
-            }
+          if (checkPanaWin(betDigitsStr, resultStr, bet.betType)) {
+            isWinner = true;
           }
         }
       }
@@ -358,12 +355,9 @@ export const setAndProcessResult = async (req, res) => {
         if (betDigitsStr === openStr + closeStr) isWinner = true;
       }
 
-      console.log("object of cheking winner")
-      // Settlement decisions
+      // Settlement
       if (isWinner) {
         winningAmount = (Number(bet.points) || 0) * (multipliers[bet.betType] || 1);
-
-        // prepare user increment
         const userIdStr = String(bet.user);
         userIncrements.set(userIdStr, (userIncrements.get(userIdStr) || 0) + winningAmount);
 
@@ -383,10 +377,8 @@ export const setAndProcessResult = async (req, res) => {
       }
     }
 
-    // Apply bulk bet updates
     if (bulkBetOps.length) await Bet.bulkWrite(bulkBetOps);
 
-    // Apply wallet increments as bulkWrite on User
     if (userIncrements.size > 0) {
       const bulkUserOps = [];
       for (const [userId, amount] of userIncrements.entries()) {
@@ -399,7 +391,8 @@ export const setAndProcessResult = async (req, res) => {
       }
       if (bulkUserOps.length) await User.bulkWrite(bulkUserOps);
     }
-    console.log("object of done")
+
+    console.log("✅ Bets processed successfully");
 
     return res.json({
       message: `🎯 ${type.toUpperCase()} result declared and bets processed successfully`,
@@ -410,6 +403,7 @@ export const setAndProcessResult = async (req, res) => {
     return res.status(500).json({ message: err.message || "Server error" });
   }
 };
+
 
 // Get results grouped date-wise (keeps compatibility with existing front-end)
 export const getResultsDatewise = async (req, res) => {

@@ -107,7 +107,6 @@ export const logoutUser = (req, res) => {
 };
 
 export const verifyUser = (req, res) => {
-  console.log("object of userController" , req.user);
   res.json({ isLoggedIn: true, user: req.user });
 };
 

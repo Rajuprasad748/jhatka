@@ -1,51 +1,74 @@
-import React from 'react';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const CustomerSupport = () => {
+  const [contactInfo, setContactInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchContactInfo = async () => {
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/users/contactInfo`,
+          { withCredentials: true }
+        );
+        setContactInfo(res.data[0]);
+      } catch (err) {
+        console.error("Error fetching contact info:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContactInfo();
+  }, []);
+
+  if (loading) return <p className="text-center mt-10">Loading contact info...</p>;
+  if (!contactInfo) return <p className="text-center mt-10">No contact info available.</p>;
+
   return (
     <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
       {/* WhatsApp */}
       <a
-        href="https://wa.me/919755534587"
+        href={`https://wa.me/${contactInfo.contactNumber}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="bg-gray-800 text-white p-6 rounded-lg shadow-md block"
+        className="bg-gray-800 text-white p-6 rounded-lg shadow-md block hover:bg-gray-700 transition"
       >
         <h2 className="text-xl font-bold mb-2">WhatsApp</h2>
-        <p>Chat with us on WhatsApp!</p>
-        <p className="font-semibold">+91 97555 34587</p>
+        <p>Click to chat with us on WhatsApp!</p>
       </a>
 
       {/* Email */}
       <a
-        href="mailto:Royalmoney10x@gmail.com"
-        className="bg-gray-800 text-white p-6 rounded-lg shadow-md block"
+        href={`mailto:${contactInfo.email.trim()}`}
+        className="bg-gray-800 text-white p-6 rounded-lg shadow-md block hover:bg-gray-700 transition"
       >
         <h2 className="text-xl font-bold mb-2">Email</h2>
-        <p>Send us an email anytime.</p>
-        <p className="font-semibold">Royalmoney10x@gmail.com</p>
+        <p>Click to send us an email anytime.</p>
       </a>
 
-      {/* Phone Contact (dummy) */}
+      {/* Telegram */}
       <a
-        href="tel:+18001234567"
-        className="bg-gray-800 text-white p-6 rounded-lg shadow-md block"
-      >
-        <h2 className="text-xl font-bold mb-2">Contact</h2>
-        <p>Call our support team.</p>
-        <p className="font-semibold">+1 (800) 123-4567</p>
-      </a>
-
-      {/* Telegram (dummy) */}
-      <a
-        href="https://t.me/example_support"
+        href={contactInfo.telegram}
         target="_blank"
         rel="noopener noreferrer"
-        className="bg-gray-800 text-white p-6 rounded-lg shadow-md block"
+        className="bg-gray-800 text-white p-6 rounded-lg shadow-md block hover:bg-gray-700 transition"
       >
         <h2 className="text-xl font-bold mb-2">Telegram</h2>
-        <p>Join our Telegram channel.</p>
-        <p className="font-semibold">@example_support</p>
+        <p>Click to join our Telegram channel.</p>
+      </a>
+
+      {/* Instagram */}
+      <a
+        href={contactInfo.instagram}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="bg-gray-800 text-white p-6 rounded-lg shadow-md block hover:bg-gray-700 transition"
+      >
+        <h2 className="text-xl font-bold mb-2">Instagram</h2>
+        <p>Click to follow us on Instagram.</p>
       </a>
 
     </div>

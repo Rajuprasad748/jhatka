@@ -44,6 +44,7 @@ function App() {
           <Route path="/gameRates" element={<GameRates />} />
           <Route path="/history" element={<History />} />
           <Route path="/customerSupport" element={<CustomerSupport />} />
+          
 
           {/* Protected Routes - only check once here */}
           <Route element={<PrivateRoute />}>

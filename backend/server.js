@@ -10,7 +10,7 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = [`https://userfrontend-xnvv.onrender.com`, `https://jhatkabackend.onrender.com`];
+const allowedOrigins = [`https://userfrontend-xnvv.onrender.com`, `https://jhatkabackend.onrender.com`, `http://localhost:5173`, `http://localhost:5174`  ];
 
 app.use(
   cors({

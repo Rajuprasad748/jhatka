@@ -52,33 +52,33 @@ const BetHistory = () => {
               className="border border-gray-200 bg-gray-800 text-white rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center hover:shadow-md transition-shadow"
             >
               {/* Left Section */}
-              <div className="flex flex-col space-y-1 text-sm sm:text-base">
+              <div className="flex flex-col space-y-1 text-lg sm:text-base">
                 <span className=" font-medium">
                   🎮 {bet.gameName}
                 </span>
-                <span className="text-xs">
+                <span className="text-md">
                   {formatDate(bet.createdAt)}
                 </span>
-                <span className="text-xs sm:text-sm capitalize">
+                <span className="text-md sm:text-sm capitalize">
                   Type: {bet.betType} ({bet.marketType})
                 </span>
-                <span className="text-xs sm:text-sm ">
+                <span className="text-md sm:text-sm ">
                   Digits: {bet.digits}
                 </span>
               </div>
 
               {/* Right Section */}
-              <div className="mt-3 sm:mt-0 text-right text-sm sm:text-base">
+              <div className="mt-3 sm:mt-0 text-right text-md sm:text-base">
                 <p className="font-semibold text-blue-600">
-                  Bet: ₹{bet.points}
+                  Bet: {bet.points}
                 </p>
                 {bet.winningAmount > 0 && (
                   <p className="font-semibold text-green-600">
-                    Won: ₹{bet.winningAmount}
+                    Won: {bet.winningAmount}
                   </p>
                 )}
                 <span
-                  className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full font-medium capitalize
+                  className={`inline-block mt-1 px-2 py-0.5 text-md rounded-full font-medium capitalize
                   ${
                     bet.status === "won"
                       ? "bg-green-50 text-green-700 border border-green-200"

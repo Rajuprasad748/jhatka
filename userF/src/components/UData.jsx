@@ -95,35 +95,35 @@ const UData = () => {
 
   // Determine game status
   const getGameStatus = (openingTime, closingTime) => {
-  const now = new Date();
+    const now = new Date();
 
-  // convert current time to minutes in the day
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    // convert current time to minutes in the day
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
-  // parse input times
-  const open = new Date(openingTime);
-  const close = new Date(closingTime);
+    // parse input times
+    const open = new Date(openingTime);
+    const close = new Date(closingTime);
 
-  const openMinutes = open.getHours() * 60 + open.getMinutes();
-  const closeMinutes = close.getHours() * 60 + close.getMinutes();
+    const openMinutes = open.getHours() * 60 + open.getMinutes();
+    const closeMinutes = close.getHours() * 60 + close.getMinutes();
 
-  if (closeMinutes > openMinutes) {
-    // ✅ Normal case: open & close on the same day
-    if (nowMinutes < openMinutes) return "beforeOpen";
-    if (nowMinutes >= openMinutes && nowMinutes < closeMinutes) return "afterOpen";
-    return "closed";
-  } else {
-    // ✅ Overnight case: e.g., open 23:30 → close 00:30
-    if (nowMinutes < openMinutes && nowMinutes >= closeMinutes) {
-      return "beforeOpen"; // still before opening tonight
+    if (closeMinutes > openMinutes) {
+      // ✅ Normal case: open & close on the same day
+      if (nowMinutes < openMinutes) return "beforeOpen";
+      if (nowMinutes >= openMinutes && nowMinutes < closeMinutes)
+        return "afterOpen";
+      return "closed";
+    } else {
+      // ✅ Overnight case: e.g., open 23:30 → close 00:30
+      if (nowMinutes < openMinutes && nowMinutes >= closeMinutes) {
+        return "beforeOpen"; // still before opening tonight
+      }
+      if (nowMinutes >= openMinutes || nowMinutes < closeMinutes) {
+        return "afterOpen"; // we're in the overnight open window
+      }
+      return "closed";
     }
-    if (nowMinutes >= openMinutes || nowMinutes < closeMinutes) {
-      return "afterOpen"; // we're in the overnight open window
-    }
-    return "closed";
-  }
-};
-
+  };
 
   return (
     <div className="bg-gray-900 min-h-screen text-white rounded-xl">
@@ -146,6 +146,14 @@ const UData = () => {
           <BannerSkeleton />
         ) : (
           <div className="text-center bg-red-600 text-white py-3 px-4 rounded-lg text-base sm:text-lg">
+            Royalmoney10x में आपका स्वागत है – आपकी सबसे भरोसेमंद मंज़िल, जहाँ
+            आपको मिलते हैं सटीक परिणाम।
+            हम आपको रीयल-टाइम अपडेट और आसान इंटरफ़ेस प्रदान
+            करते हैं ताकि आप हमेशा सही और आत्मविश्वास से भरे निर्णय ले सकें।
+            शुरुआती हों या अनुभवी, हर कोई Royalmoney10x पर भरोसा करता है,
+            क्योंकि यहाँ मिलती है पारदर्शिता, तेज़ अपडेट और भरोसेमंद अनुभव।
+            आज ही जुड़ें और जीत की दिशा में पहला कदम बढ़ाएं!
+
             {/* <Link
               to="/personalGame"
               className="hover:underline animate-blink"
@@ -186,7 +194,8 @@ const UData = () => {
 
             const openDigitsStr = openDigits?.join("") || "";
             const closeDigitsStr = closeDigits?.join("") || "";
-            const midDigits = getLastDigitOfSum(openDigits) + getLastDigitOfSum(closeDigits);
+            const midDigits =
+              getLastDigitOfSum(openDigits) + getLastDigitOfSum(closeDigits);
             const status = getGameStatus(openingTime, closingTime);
 
             return (

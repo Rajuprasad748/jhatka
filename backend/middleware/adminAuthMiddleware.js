@@ -14,13 +14,9 @@ export const adminAuthMiddleware = async (req, res, next) => {
     // ✅ Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    console.log("decode adminAuthMiddleware" , decoded)
-    
-
     // ✅ Attach admin to request
     req.admin = await Admin.findById(decoded.id).select("-password");
 
-    console.log("req admin" , req.admin)
 
     if (!req.admin) {
       return res.status(401).json({ message: "Admin not found" });
