@@ -7,10 +7,12 @@ axios.defaults.withCredentials = true;
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+   // 🧠 Get token from localStorage
 
   const fetchUser = async () => {
     try {
-      const token = localStorage.getItem("token"); // 🧠 Get token from localStorage
+
+      const token = localStorage.getItem("token");      
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
       const res = await axios.get(
@@ -38,8 +40,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     const res = await axios.post(
       `${import.meta.env.VITE_API_BASE_URL}/users/login`,
-      credentials,
-      { withCredentials: true }
+      credentials,  
     );
 
     // ✅ store token manually for Safari/iOS

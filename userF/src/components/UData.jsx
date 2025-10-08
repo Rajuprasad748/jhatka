@@ -51,10 +51,15 @@ const UData = () => {
   const fetchGames = useCallback(async () => {
     if (initialLoad) setLoading(true);
     setError("");
+
+    const token = localStorage.getItem("token");
+
     try {
       const { data } = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/users/games`,
-        { withCredentials: true }
+        { withCredentials: true , headers: {
+      Authorization: `Bearer ${token}`, // 🔥 sending manually
+    }, }
       );
 
       const filtered = data.filter((g) => g.showToUsers);

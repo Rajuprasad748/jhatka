@@ -5,12 +5,18 @@ const BetHistory = () => {
   const [bets, setBets] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  
   useEffect(() => {
     const fetchBets = async () => {
       try {
+        const token = localStorage.getItem("token");
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/users/betHistory`,
-          { withCredentials: true }
+          { withCredentials: true ,
+            headers: {
+              Authorization: `Bearer ${token}`, // 🔥 sending manually
+            },
+          }
         );
         setBets(res.data);
       } catch (error) {
