@@ -8,7 +8,9 @@ const AllPlayers = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/all-users`);
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/admin/all-users`
+        );
         setUsers(res.data);
       } catch (err) {
         console.error("Failed to fetch users:", err);
@@ -19,25 +21,73 @@ const AllPlayers = () => {
     fetchUsers();
   }, []);
 
+  // ✅ Skeleton component (consistent style)
+  const SkeletonCard = () => (
+    <div className="border rounded-lg p-4 bg-gray-800 animate-pulse">
+      <div className="h-4 bg-gray-700 w-20 mb-2 rounded"></div>
+      <div className="h-3 bg-gray-700 w-32 mb-2 rounded"></div>
+      <div className="h-3 bg-gray-700 w-40 mb-2 rounded"></div>
+      <div className="h-3 bg-gray-700 w-24 mb-2 rounded"></div>
+      <div className="h-3 bg-gray-700 w-36 mb-2 rounded"></div>
+    </div>
+  );
+
+  const SkeletonTableRow = () => (
+    <tr className="animate-pulse">
+      {[...Array(6)].map((_, i) => (
+        <td key={i} className="border px-4 py-2">
+          <div className="h-4 bg-gray-300 rounded w-24"></div>
+        </td>
+      ))}
+    </tr>
+  );
+
   return (
     <div className="p-4 max-w-full">
-      <h2 className="text-xl font-semibold mb-2 text-center">All Users</h2>
+      <h2 className="text-xl font-semibold mb-2 text-center text-gray-800">
+        All Users
+      </h2>
 
-      {/* Total User Counter */}
       {!loading && (
         <p className="text-center text-sm text-gray-600 mb-4">
           Total Users: <span className="font-bold">{users.length}</span>
         </p>
       )}
 
-      {/* Loader */}
+      {/* ✅ Skeleton Loading View */}
       {loading && (
-        <div className="flex justify-center items-center py-10">
-          <div className="w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
-        </div>
+        <>
+          {/* Mobile Skeleton */}
+          <div className="block md:hidden space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+
+          {/* Desktop Skeleton */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full table-auto border border-gray-300">
+              <thead>
+                <tr className="bg-gray-300">
+                  <th className="border px-4 py-2 text-left">#</th>
+                  <th className="border px-4 py-2 text-left">ID</th>
+                  <th className="border px-4 py-2 text-left">Name</th>
+                  <th className="border px-4 py-2 text-left">Email</th>
+                  <th className="border px-4 py-2 text-left">Wallet Balance</th>
+                  <th className="border px-4 py-2 text-left">Created At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...Array(5)].map((_, i) => (
+                  <SkeletonTableRow key={i} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
-      {/* Mobile View */}
+      {/* ✅ Mobile View */}
       {!loading && (
         <div className="block md:hidden space-y-4">
           {users.length > 0 ? (
@@ -57,7 +107,8 @@ const AllPlayers = () => {
                   <span className="font-medium">Email:</span> {user.email}
                 </p>
                 <p className="text-sm">
-                  <span className="font-medium">Wallet Balance:</span> ₹{user.walletBalance ?? 0}
+                  <span className="font-medium">Wallet Balance:</span> ₹
+                  {user.walletBalance ?? 0}
                 </p>
                 <p className="text-sm">
                   <span className="font-medium">Created:</span>{" "}
@@ -77,7 +128,7 @@ const AllPlayers = () => {
         </div>
       )}
 
-      {/* Desktop View */}
+      {/* ✅ Desktop View */}
       {!loading && (
         <div className="hidden md:block overflow-x-auto">
           {users.length > 0 ? (
@@ -99,7 +150,9 @@ const AllPlayers = () => {
                     <td className="border px-4 py-2">{user._id}</td>
                     <td className="border px-4 py-2">{user.name}</td>
                     <td className="border px-4 py-2">{user.email}</td>
-                    <td className="border px-4 py-2">₹{user.walletBalance ?? 0}</td>
+                    <td className="border px-4 py-2">
+                      ₹{user.walletBalance ?? 0}
+                    </td>
                     <td className="border px-4 py-2">
                       {new Date(user.createdAt).toLocaleString()}
                     </td>

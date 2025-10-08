@@ -18,7 +18,6 @@ export const findUserById = async (req, res) => {
 export const findUserByMobile = async (req, res) => {
   const { mobile } = req.params ;
   const user = await User.findOne({ mobile });
-  console.log(" user received:", user);
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
@@ -27,9 +26,7 @@ export const findUserByMobile = async (req, res) => {
 
 export const findAllUsers = async (req, res) => {
   try {
-    console.log("FIndallUsers");
     const users = await User.find({});
-    console.log(users);
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: "Error fetching users" });

@@ -4,6 +4,7 @@ import axios from "axios";
 const RemoveTokenHistory = () => {
   const [tokenHistory, setTokenHistory] = useState({});
   const [expandedDays, setExpandedDays] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchTokenHistory();
@@ -30,6 +31,8 @@ const RemoveTokenHistory = () => {
       setTokenHistory(grouped);
     } catch (error) {
       console.error("Error fetching remove token history:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,7 +43,6 @@ const RemoveTokenHistory = () => {
     }));
   };
 
-  // Calculate sum of "remove" tokens for a given day
   const calculateDaySum = (tokens) =>
     tokens.reduce((sum, token) => sum + token.amount, 0);
 
@@ -49,46 +51,73 @@ const RemoveTokenHistory = () => {
       <h2 className="text-xl font-bold mb-4 text-center">
         Removed Token History
       </h2>
-      {Object.keys(tokenHistory).map((day) => (
-        <div
-          key={day}
-          className="mb-4 border rounded-lg shadow overflow-hidden"
-        >
-          {/* Header */}
-          <div
-            className="p-3 bg-gray-100 cursor-pointer flex justify-between items-center"
-            onClick={() => toggleDay(day)}
-          >
-            <span className="font-semibold">{day}</span>
-            <span className="text-red-600 font-bold">
-              Total Removed: {calculateDaySum(tokenHistory[day])}
-            </span>
-          </div>
 
-          {/* Dropdown */}
-          {expandedDays[day] && (
-            <div className="bg-white">
-              {tokenHistory[day].map((token) => (
-                <div
-                  key={token._id}
-                  className="flex justify-between border-b px-4 py-2 text-sm"
-                >
-                  <span>
-                    <span className="font-medium">{token.userId?._id}</span> -{" "}
-                    <span className="font-medium">
-                      {token.userId?.name || "Unknown User"}
-                    </span>{" "}
-                    ({token.userId?.mobile || "No Mobile"})
-                  </span>
-                  <span className="text-red-600 font-semibold">
-                    -{token.amount}
-                  </span>
-                </div>
-              ))}
+      {/* Skeleton Loader */}
+      {loading && (
+        <div className="space-y-4">
+          {[...Array(4)].map((_, index) => (
+            <div key={index} className="border rounded-lg shadow">
+              <div className="p-3 bg-gray-100">
+                <div className="h-4 w-1/3 bg-gray-300 animate-pulse rounded mb-2"></div>
+              </div>
             </div>
-          )}
+          ))}
         </div>
-      ))}
+      )}
+
+      {/* No Data */}
+      {!loading && Object.keys(tokenHistory).length === 0 && (
+        <div className="flex justify-center py-10">
+          <img
+            src="https://cdn.dribbble.com/users/2131993/screenshots/6007793/no_result.gif"
+            alt="No Data"
+            className="w-60"
+          />
+        </div>
+      )}
+
+      {/* Main Content */}
+      {!loading &&
+        Object.keys(tokenHistory).map((day) => (
+          <div
+            key={day}
+            className="mb-4 border rounded-lg shadow overflow-hidden"
+          >
+            {/* Header */}
+            <div
+              className="p-3 bg-gray-100 cursor-pointer flex justify-between items-center hover:bg-gray-200 transition"
+              onClick={() => toggleDay(day)}
+            >
+              <span className="font-semibold">{day}</span>
+              <span className="text-red-600 font-bold">
+                Total Removed: {calculateDaySum(tokenHistory[day])}
+              </span>
+            </div>
+
+            {/* Token List */}
+            {expandedDays[day] && (
+              <div className="bg-white divide-y">
+                {tokenHistory[day].map((token) => (
+                  <div
+                    key={token._id}
+                    className="flex justify-between px-4 py-2 text-sm hover:bg-gray-50 transition"
+                  >
+                    <span>
+                      <span className="font-medium">{token.userId?._id}</span> -{" "}
+                      <span className="font-medium">
+                        {token.userId?.name || "Unknown User"}
+                      </span>{" "}
+                      ({token.userId?.mobile || "No Mobile"})
+                    </span>
+                    <span className="text-red-600 font-semibold">
+                      -{token.amount}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
     </div>
   );
 };

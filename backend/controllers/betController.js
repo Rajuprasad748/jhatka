@@ -15,8 +15,6 @@ export const placeBet = async (req, res) => {
     // user is injected from verifyToken middleware
     const userId = req.user._id;
 
-    console.log("object of userId", userId);
-
     // ✅ Find user
     const user = await User.findById(userId);
     if (!user) {
@@ -36,6 +34,10 @@ export const placeBet = async (req, res) => {
 
     user.walletBalance -= pointsNumber;
     await user.save();
+
+    /*
+    console.log("Bet placed:123", userId, gameId, game.name, betType, date, marketType, digits, points);
+    */
 
     // ✅ Save bet
     const newBet = new Bet({

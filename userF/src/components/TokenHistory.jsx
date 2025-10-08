@@ -12,7 +12,7 @@ const TokenHistory = () => {
           `${import.meta.env.VITE_API_BASE_URL}/users/tokenHistory`,
           { withCredentials: true }
         );
-        setHistory(res.data); // ✅ assuming backend returns an array of { remark, amount, type, createdAt }
+        setHistory(res.data); // assuming backend returns [{ remark, amount, type, createdAt }]
       } catch (error) {
         console.error("Error fetching token history:", error);
       } finally {
@@ -23,7 +23,6 @@ const TokenHistory = () => {
     fetchHistory();
   }, []);
 
-  // ✅ Format date function
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString("en-IN", {
       dateStyle: "medium",
@@ -31,12 +30,25 @@ const TokenHistory = () => {
     });
   };
 
+  // ✅ Skeleton Loader Component
+  const SkeletonItem = () => (
+    <div className="flex justify-between items-start bg-slate-700 p-4 rounded-xl animate-pulse">
+      <div className="space-y-2">
+        <div className="h-4 w-32 bg-slate-600 rounded"></div>
+        <div className="h-3 w-20 bg-slate-600 rounded"></div>
+      </div>
+      <div className="h-5 w-10 bg-slate-600 rounded"></div>
+    </div>
+  );
+
   return (
     <div className="w-full max-w-md mx-auto rounded-xl shadow p-4 mt-8">
-      <h2 className="text-lg font-semibold mb-3">Token History</h2>
-
       {loading ? (
-        <p className="text-gray-500 text-center">Loading...</p>
+        <div className="space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <SkeletonItem key={i} />
+          ))}
+        </div>
       ) : history.length === 0 ? (
         <p className="text-gray-500 text-center">No history available</p>
       ) : (
@@ -44,23 +56,20 @@ const TokenHistory = () => {
           {history.map((item, index) => (
             <div
               key={index}
-              className="flex justify-between text-white items-start bg-slate-700 p-4 rounded-xl border-b  pb-2 last:border-none"
+              className="flex justify-between text-white items-start bg-slate-700 p-4 rounded-xl border-b pb-2 last:border-none"
             >
-              {/* Left side: Remark + Date */}
               <div>
-                <span className="block ">{item.remark}</span>
-                <span className="text-xs">
-                  {formatDate(item.createdAt)}
-                </span>
+                <span className="block font-bold">{item.remark}</span>
+                <span className="text-sm">{formatDate(item.createdAt)}</span>
               </div>
 
-              {/* Right side: Amount */}
               <span
-                className={`font-bold ${
-                  item.type === "add" ? "text-green-600" : "text-red-600"
+                className={`font-bold text-lg ${
+                  item.type === "add" ? "text-green-500" : "text-red-500"
                 }`}
               >
-                {item.type === "add" ? "+" : "-"}{item.amount}
+                {item.type === "add" ? "+" : "-"}
+                {item.amount}
               </span>
             </div>
           ))}
