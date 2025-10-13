@@ -41,7 +41,7 @@ const convertToMongoDate = (timeString) => {
     if (meridian === "AM" && hours === 12) hours = 0;
   }
 
-  // Create normal JS Date (local timezone)
+  // Create local date (based on current date)
   const now = new Date();
   const date = new Date(
     now.getFullYear(),
@@ -52,8 +52,13 @@ const convertToMongoDate = (timeString) => {
     0
   );
 
-  return date; // ← no timezone shifting
+  // 🕒 Subtract 5 hours 30 minutes to store UTC equivalent of IST
+  date.setHours(date.getHours() - 5);
+  date.setMinutes(date.getMinutes() - 30);
+
+  return date;
 };
+
 
 
 // ✅ Utility: return last digit of sum as string
