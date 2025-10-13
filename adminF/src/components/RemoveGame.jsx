@@ -33,11 +33,15 @@ const RemoveGame = () => {
 
   const handleDelete = async () => {
     if (!selectedGame) return;
-    console.log("object", selectedGame)
+    const token = localStorage.getItem("token");
     try {
       await axios.delete(
         `${import.meta.env.VITE_API_BASE_URL}/admin/deleteGame/${selectedGame}`,
-        { withCredentials: true }
+        {
+          withCredentials: true,headers: {
+      Authorization: `Bearer ${token}`, // 🔥 sending manually
+    },
+        }
       );
       setGames(games.filter((g) => g._id !== selectedGame));
       setSelectedGame("");

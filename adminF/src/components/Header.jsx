@@ -54,7 +54,7 @@ function Header() {
           <span
             className={`text-2xl sm:text-3xl md:text-4xl font-bold tracking-wider ${colors[currentColor]} transition-colors duration-300`}
           >
-            RoyalMoney9x
+            RoyalMoney10x
           </span>
         </div>
 

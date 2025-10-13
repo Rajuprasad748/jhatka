@@ -114,7 +114,6 @@ export const verifyUser = (req, res) => {
 export const getTokenHistory = async (req, res) => {
 
   try {
-    console.log("object" , req.user)
     const userId = req.user._id;
     const history = await Token.find({ userId }).sort({ createdAt: -1 });
     res.json(history);

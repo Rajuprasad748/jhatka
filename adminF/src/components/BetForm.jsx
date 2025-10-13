@@ -13,14 +13,21 @@ const BetForm = () => {
 
   useEffect(() => {
     const fetchGames = async () => {
+      const token = localStorage.getItem("token");
       try {
         setLoading(true);
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`
+          `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`, {
+          withCredentials: true,headers: {
+      Authorization: `Bearer ${token}`, // 🔥 sending manually
+    },
+        }
         );
         setGames(res.data);
       } catch (error) {
-        toast.error(`⚠️ ${error.response?.data?.message || "Failed to fetch games"}`);
+        toast.error(
+          `⚠️ ${error.response?.data?.message || "Failed to fetch games"}`
+        );
       } finally {
         setLoading(false);
       }
@@ -31,11 +38,18 @@ const BetForm = () => {
 
   const handleFinalSubmit = async () => {
     setShowConfirm(false);
+    const token = localStorage.getItem("token");
     try {
       setLoading(true);
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/admin/set-result/${selectedGame}`,
-        { type, value: digits }
+        { type, value: digits },
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`, // 🔥 sending manually
+          },
+        }
       );
 
       setGames(games.map((g) => (g._id === res.data._id ? res.data : g)));

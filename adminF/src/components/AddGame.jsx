@@ -51,10 +51,16 @@ const AddGame = () => {
       closeDigits: formatDigits(formData.closeDigits),
     };
 
+    const token = localStorage.getItem("token");
+
     try {
       await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/admin/addGame`,
-        payload
+        payload, {
+          withCredentials: true,headers: {
+      Authorization: `Bearer ${token}`, // 🔥 sending manually
+    },
+        }
       );
       toast.success("Game added successfully!");
       } catch (error) {

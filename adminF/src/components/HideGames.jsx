@@ -10,9 +10,14 @@ const HideGames = () => {
   // Fetch all games
   useEffect(() => {
     const fetchGames = async () => {
+      const token = localStorage.getItem("token");
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`
+          `${import.meta.env.VITE_API_BASE_URL}/admin/allGames` , {
+          withCredentials: true,headers: {
+      Authorization: `Bearer ${token}`, // 🔥 sending manually
+    },
+        }
         );
         setGames(res.data);
       } catch (err) {

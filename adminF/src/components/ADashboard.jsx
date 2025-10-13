@@ -52,6 +52,14 @@ const ADashboard = () => {
     title: 'Contact Info',
     Link: '/contactInfo',
   },
+  {
+    title: 'Accounts',
+    Link: '/accounts',
+  },
+  {
+    title: 'For Developers',
+    Link: '/developer',
+  },
 ];
 
 

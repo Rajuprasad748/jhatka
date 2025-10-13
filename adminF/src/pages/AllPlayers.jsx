@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import * as XLSX from "xlsx";
+import { useNavigate } from "react-router-dom";
+import { LuDownload } from "react-icons/lu";
 
 const AllPlayers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -14,6 +19,7 @@ const AllPlayers = () => {
         setUsers(res.data);
       } catch (err) {
         console.error("Failed to fetch users:", err);
+        setError("Failed to load users. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -21,7 +27,29 @@ const AllPlayers = () => {
     fetchUsers();
   }, []);
 
-  // ✅ Skeleton component (consistent style)
+  // ✅ Navigate to userBetDetails
+  const handleViewDetails = (userId) => {
+    navigate("/users/userBetDetails", { state: { userId } });
+  };
+
+  // ✅ Export to Excel
+  const exportToExcel = () => {
+    if (!users.length) return alert("No data to export!");
+    const data = users.map((user, index) => ({
+      "#": index + 1,
+      ID: user._id,
+      Name: user.name,
+      Mobile: user.mobile,
+      "Wallet Balance": user.walletBalance ?? 0,
+      "Created At": new Date(user.createdAt).toLocaleString(),
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+    XLSX.writeFile(workbook, `AllUsers_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
+  // ✅ Skeleton components
   const SkeletonCard = () => (
     <div className="border rounded-lg p-4 bg-gray-800 animate-pulse">
       <div className="h-4 bg-gray-700 w-20 mb-2 rounded"></div>
@@ -34,7 +62,7 @@ const AllPlayers = () => {
 
   const SkeletonTableRow = () => (
     <tr className="animate-pulse">
-      {[...Array(6)].map((_, i) => (
+      {[...Array(7)].map((_, i) => (
         <td key={i} className="border px-4 py-2">
           <div className="h-4 bg-gray-300 rounded w-24"></div>
         </td>
@@ -48,13 +76,29 @@ const AllPlayers = () => {
         All Users
       </h2>
 
+      {error && (
+        <p className="text-center text-red-500 font-medium mb-4">{error}</p>
+      )}
+
       {!loading && (
         <p className="text-center text-sm text-gray-600 mb-4">
           Total Users: <span className="font-bold">{users.length}</span>
         </p>
       )}
 
-      {/* ✅ Skeleton Loading View */}
+      {/* ✅ Download Button */}
+      {!loading && users.length > 0 && (
+        <div className="flex justify-end mb-3">
+          <button
+            onClick={exportToExcel}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition flex items-center justify-center"
+          >
+            Download <LuDownload className="inline-block ml-1" />
+          </button>
+        </div>
+      )}
+
+      {/* ✅ Skeleton Loading */}
       {loading && (
         <>
           {/* Mobile Skeleton */}
@@ -72,9 +116,10 @@ const AllPlayers = () => {
                   <th className="border px-4 py-2 text-left">#</th>
                   <th className="border px-4 py-2 text-left">ID</th>
                   <th className="border px-4 py-2 text-left">Name</th>
-                  <th className="border px-4 py-2 text-left">Email</th>
+                  <th className="border px-4 py-2 text-left">Mobile</th>
                   <th className="border px-4 py-2 text-left">Wallet Balance</th>
                   <th className="border px-4 py-2 text-left">Created At</th>
+                  <th className="border px-4 py-2 text-left">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -88,9 +133,13 @@ const AllPlayers = () => {
       )}
 
       {/* ✅ Mobile View */}
-      {!loading && (
-        <div className="block md:hidden space-y-4">
-          {users.length > 0 ? (
+      <div
+        className={`block md:hidden space-y-4 transition-opacity duration-500 ${
+          loading ? "opacity-0" : "opacity-100"
+        }`}
+      >
+        {!loading &&
+          (users.length > 0 ? (
             users.map((user, index) => (
               <div
                 key={user._id}
@@ -104,7 +153,7 @@ const AllPlayers = () => {
                   <span className="font-medium">Name:</span> {user.name}
                 </p>
                 <p className="text-sm">
-                  <span className="font-medium">Email:</span> {user.email}
+                  <span className="font-medium">Mobile:</span> {user.mobile}
                 </p>
                 <p className="text-sm">
                   <span className="font-medium">Wallet Balance:</span> ₹
@@ -114,6 +163,12 @@ const AllPlayers = () => {
                   <span className="font-medium">Created:</span>{" "}
                   {new Date(user.createdAt).toLocaleString()}
                 </p>
+                <button
+                  onClick={() => handleViewDetails(user._id)}
+                  className="mt-2 bg-blue-600 text-white text-sm px-3 py-1 rounded hover:bg-blue-700 transition"
+                >
+                  View Bets
+                </button>
               </div>
             ))
           ) : (
@@ -124,23 +179,27 @@ const AllPlayers = () => {
                 className="w-60"
               />
             </div>
-          )}
-        </div>
-      )}
+          ))}
+      </div>
 
       {/* ✅ Desktop View */}
-      {!loading && (
-        <div className="hidden md:block overflow-x-auto">
-          {users.length > 0 ? (
+      <div
+        className={`hidden md:block overflow-x-auto transition-opacity duration-500 ${
+          loading ? "opacity-0" : "opacity-100"
+        }`}
+      >
+        {!loading &&
+          (users.length > 0 ? (
             <table className="w-full table-auto border border-gray-300">
-              <thead>
-                <tr className="bg-gray-300">
+              <thead className="sticky top-0 bg-gray-300">
+                <tr>
                   <th className="border px-4 py-2 text-left">#</th>
                   <th className="border px-4 py-2 text-left">ID</th>
                   <th className="border px-4 py-2 text-left">Name</th>
-                  <th className="border px-4 py-2 text-left">Email</th>
+                  <th className="border px-4 py-2 text-left">Mobile</th>
                   <th className="border px-4 py-2 text-left">Wallet Balance</th>
                   <th className="border px-4 py-2 text-left">Created At</th>
+                  <th className="border px-4 py-2 text-left">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -149,12 +208,20 @@ const AllPlayers = () => {
                     <td className="border px-4 py-2">{index + 1}</td>
                     <td className="border px-4 py-2">{user._id}</td>
                     <td className="border px-4 py-2">{user.name}</td>
-                    <td className="border px-4 py-2">{user.email}</td>
+                    <td className="border px-4 py-2">{user.mobile}</td>
                     <td className="border px-4 py-2">
                       ₹{user.walletBalance ?? 0}
                     </td>
                     <td className="border px-4 py-2">
                       {new Date(user.createdAt).toLocaleString()}
+                    </td>
+                    <td className="border px-4 py-2">
+                      <button
+                        onClick={() => handleViewDetails(user._id)}
+                        className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition"
+                      >
+                        View Bets
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -168,9 +235,8 @@ const AllPlayers = () => {
                 className="w-60"
               />
             </div>
-          )}
-        </div>
-      )}
+          ))}
+      </div>
     </div>
   );
 };

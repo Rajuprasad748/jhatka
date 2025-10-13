@@ -16,80 +16,73 @@ const multipliers = {
 };
 
 // Convert "HH:mm" (24h) string to today's Date (Mongo Date)
+// Convert "HH:mm" (24h) or "HH:mm AM/PM" or Date-like string to Date (today's date + time)
 const convertToMongoDate = (timeString) => {
   if (!timeString) return null;
-  // if it's already a Date-like string saved by mongo, try to parse
-  // Accept formats: "HH:mm", "HH:mm AM/PM", Date object / ISO string
+
+  // Already a Date object
   if (timeString instanceof Date) return timeString;
 
-  // If ISO string or full date string, parse and use its hours/minutes
+  // If ISO string (e.g., 2025-10-13T13:45:00Z)
   const maybeDate = new Date(timeString);
   if (!isNaN(maybeDate.getTime()) && timeString.includes("T")) {
-    const d = maybeDate;
-    const now = new Date();
-    return new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      d.getHours(),
-      d.getMinutes(),
-      0
-    );
+    return maybeDate;
   }
 
-  // If "HH:mm AM/PM" or "HH:mm"
+  // Parse "HH:mm" or "HH:mm AM/PM"
   const parts = timeString.trim().split(" ");
   let timePart = parts[0];
   let meridian = parts[1] ? parts[1].toUpperCase() : null;
 
   let [hours, minutes] = timePart.split(":").map((s) => parseInt(s, 10));
+
   if (meridian) {
     if (meridian === "PM" && hours !== 12) hours += 12;
     if (meridian === "AM" && hours === 12) hours = 0;
   }
 
+  // Create normal JS Date (local timezone)
   const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
+  const date = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    hours,
+    minutes,
+    0
+  );
+
+  return date; // ← no timezone shifting
 };
 
-// Utility: return last digit of sum as string (keeps comparisons consistent)
+
+// ✅ Utility: return last digit of sum as string
 function getLastDigitSum(arr) {
   if (!Array.isArray(arr)) arr = Array.from(String(arr), Number);
   const sum = arr.reduce((a, b) => a + Number(b), 0);
   return String(sum % 10);
 }
 
-// Helper: extract "HH:MM" from various stored formats (Date, ISO string, "HH:mm", "HH:mm AM")
+// ✅ Extract time from stored date or string → returns "HH:mm AM/PM" in IST
 function getTimeOnly(stored) {
   if (!stored) return null;
 
-  // If stored is a Date object
-  if (stored instanceof Date) {
-    const hh = String(stored.getHours()).padStart(2, "0");
-    const mm = String(stored.getMinutes()).padStart(2, "0");
-    return `${hh}:${mm}`;
-  }
+  const date =
+    stored instanceof Date
+      ? stored
+      : !isNaN(new Date(stored))
+      ? new Date(stored)
+      : null;
+  if (!date) return null;
 
-  // If it's a string that is an ISO/full date
-  const maybeDate = new Date(stored);
-  if (!isNaN(maybeDate.getTime()) && stored.includes("T")) {
-    return `${String(maybeDate.getHours()).padStart(2, "0")}:${String(
-      maybeDate.getMinutes()
-    ).padStart(2, "0")}`;
-  }
+  const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000); // Convert UTC → IST if needed
 
-  // If it's "HH:mm" or "HH:mm AM/PM"
-  const parts = stored.trim().split(" ");
-  let timePart = parts[0];
-  let meridian = parts[1] ? parts[1].toUpperCase() : null;
-  let [hours, minutes] = timePart.split(":").map((s) => parseInt(s, 10));
+  let hours = localDate.getHours();
+  const minutes = String(localDate.getMinutes()).padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
 
-  if (meridian) {
-    if (meridian === "PM" && hours !== 12) hours += 12;
-    if (meridian === "AM" && hours === 12) hours = 0;
-  }
-
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  return `${String(hours).padStart(2, "0")}:${minutes} ${ampm}`;
 }
 
 // Normalize incoming time payload and convert to Mongo Date in add/update flows.
@@ -133,7 +126,7 @@ export const updateGameTime = async (req, res) => {
     const game = await Game.findById(selectedGameId);
     if (!game) return res.status(404).json({ message: "Game not found" });
 
-    console.log("objects of" ,  openingTime , closingTime);
+    console.log("objects of", openingTime, closingTime);
 
     if (openingTime) {
       game.openingTime = normalizeAndConvertTime(openingTime);
@@ -157,20 +150,37 @@ export const updateGameTime = async (req, res) => {
 // Add game — expects openingTime/closingTime as "HH:mm" or "HH:mm AM/PM" or date-like strings
 export const addGame = async (req, res) => {
   try {
-    const { name, openingTime, closingTime, openDigits, closeDigits, showToUsers, isPersonal } = req.body;
+    const {
+      name,
+      openingTime,
+      closingTime,
+      openDigits,
+      closeDigits,
+      showToUsers,
+      isPersonal,
+    } = req.body;
 
     if (!name || !openingTime || !closingTime || !openDigits || !closeDigits) {
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    if (!Array.isArray(openDigits) || openDigits.length !== 3 || !Array.isArray(closeDigits) || closeDigits.length !== 3) {
-      return res.status(400).json({ message: "Open and Close digits must contain exactly 3 numbers." });
+    if (
+      !Array.isArray(openDigits) ||
+      openDigits.length !== 3 ||
+      !Array.isArray(closeDigits) ||
+      closeDigits.length !== 3
+    ) {
+      return res
+        .status(400)
+        .json({
+          message: "Open and Close digits must contain exactly 3 numbers.",
+        });
     }
 
     const newGame = new Game({
       name: name.toUpperCase(),
-      openingTime : normalizeAndConvertTime(openingTime),
-      closingTime : normalizeAndConvertTime(closingTime),
+      openingTime: normalizeAndConvertTime(openingTime),
+      closingTime: normalizeAndConvertTime(closingTime),
       openDigits,
       closeDigits,
       showToUsers: showToUsers ?? true,
@@ -235,7 +245,9 @@ export const setAndProcessResult = async (req, res) => {
     if (!game) return res.status(404).json({ message: "Game not found" });
 
     const gameTime =
-      type === "open" ? getTimeOnly(game.openingTime) : getTimeOnly(game.closingTime);
+      type === "open"
+        ? getTimeOnly(game.openingTime)
+        : getTimeOnly(game.closingTime);
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
       now.getMinutes()
@@ -244,7 +256,9 @@ export const setAndProcessResult = async (req, res) => {
     console.log("object of game time", gameTime, currentTime);
 
     if (gameTime && currentTime !== gameTime) {
-      console.warn(`⚠️ Publishing ${type} result at ${currentTime}, scheduled for ${gameTime}`);
+      console.warn(
+        `⚠️ Publishing ${type} result at ${currentTime}, scheduled for ${gameTime}`
+      );
     }
 
     const digits = value.split("").map((d) => Number(d));
@@ -282,7 +296,10 @@ export const setAndProcessResult = async (req, res) => {
 
     const bets = await Bet.find({ gameId, status: "pending" });
     if (!bets || bets.length === 0) {
-      return res.json({ message: "Result declared, no bets to process", result: resultDoc });
+      return res.json({
+        message: "Result declared, no bets to process",
+        result: resultDoc,
+      });
     }
 
     const bulkBetOps = [];
@@ -310,7 +327,8 @@ export const setAndProcessResult = async (req, res) => {
 
       // SINGLE DIGIT
       if (bet.betType === "singleDigit") {
-        const resForMarket = bet.marketType === "open" ? openResult : closeResult;
+        const resForMarket =
+          bet.marketType === "open" ? openResult : closeResult;
         if (resForMarket) {
           const last = getLastDigitSum(resForMarket.value);
           if (betDigitsStr === last) isWinner = true;
@@ -320,13 +338,15 @@ export const setAndProcessResult = async (req, res) => {
       // JODI
       if (bet.betType === "jodi" && openResult && closeResult) {
         const jodi =
-          getLastDigitSum(openResult.value) + getLastDigitSum(closeResult.value);
+          getLastDigitSum(openResult.value) +
+          getLastDigitSum(closeResult.value);
         if (betDigitsStr === jodi) isWinner = true;
       }
 
       // 🔹 NEW PANA LOGIC
       if (["singlePana", "doublePana", "triplePana"].includes(bet.betType)) {
-        const resForMarket = bet.marketType === "open" ? openResult : closeResult;
+        const resForMarket =
+          bet.marketType === "open" ? openResult : closeResult;
         if (resForMarket) {
           const resultStr = resForMarket.value.join("");
           if (checkPanaWin(betDigitsStr, resultStr, bet.betType)) {
@@ -357,9 +377,13 @@ export const setAndProcessResult = async (req, res) => {
 
       // Settlement
       if (isWinner) {
-        winningAmount = (Number(bet.points) || 0) * (multipliers[bet.betType] || 1);
+        winningAmount =
+          (Number(bet.points) || 0) * (multipliers[bet.betType] || 1);
         const userIdStr = String(bet.user);
-        userIncrements.set(userIdStr, (userIncrements.get(userIdStr) || 0) + winningAmount);
+        userIncrements.set(
+          userIdStr,
+          (userIncrements.get(userIdStr) || 0) + winningAmount
+        );
 
         bulkBetOps.push({
           updateOne: {
@@ -403,7 +427,6 @@ export const setAndProcessResult = async (req, res) => {
     return res.status(500).json({ message: err.message || "Server error" });
   }
 };
-
 
 // Get results grouped date-wise (keeps compatibility with existing front-end)
 export const getResultsDatewise = async (req, res) => {

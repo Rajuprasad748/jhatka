@@ -53,6 +53,7 @@ export const adminLogin = async (req, res) => {
 
     res.json({
       success: true,
+      token,
       admin: { id: admin._id, username: admin.username, mobile: admin.mobile },
     });
   } catch (err) {
@@ -63,7 +64,6 @@ export const adminLogin = async (req, res) => {
 
 export const verifyAdmin = async (req, res) => {
   try {
-    console.log("object of req.admin" , req.admin)
     const adminId = req.admin.id;
     const admin = await Admin.findById(adminId).select("-password");
     if (!admin) return res.status(404).json({ message: "Admin not found" });

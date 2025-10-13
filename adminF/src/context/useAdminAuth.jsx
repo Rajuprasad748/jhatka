@@ -16,7 +16,7 @@ export const AdminAuthProvider = ({ children }) => {
       setError(null);
       const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/admin/login`, { mobile, password });
       setAdmin(res.data.admin);
-      console.log("auth admin" , res.data.admin)
+      localStorage.setItem("token", res.data.token);
       return res.data.admin;
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
@@ -36,10 +36,13 @@ export const AdminAuthProvider = ({ children }) => {
 
   // ✅ Check current session on refresh
   const checkAuth = async () => {
+    const token = localStorage.getItem("token");
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/verify` , {
-        withCredentials: true
-      });
+          withCredentials: true,headers: {
+      Authorization: `Bearer ${token}`, // 🔥 sending manually
+    },
+        });
       setAdmin(res.data.admin);
     } catch (err) {
       setAdmin(null);

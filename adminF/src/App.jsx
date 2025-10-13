@@ -15,6 +15,9 @@ import AddGame from './components/AddGame';
 import RemoveGame from './components/RemoveGame';
 import ADashboard from './components/ADashboard';
 import UpdateContactInfo from './components/UpdateContactInfo';
+import UserBetHistory from './components/UserBetHistory';
+import Account from './components/Account';
+import QueryWriter from './pages/QueryWriter';
 
 function App() {
   return (
@@ -37,6 +40,9 @@ function App() {
         <Route path="/addGame" element={<AddGame/>} />
         <Route path="/removeGame" element={<RemoveGame/>} />
         <Route path="/contactInfo" element={<UpdateContactInfo/>} />
+        <Route path="/users/userBetDetails" element={<UserBetHistory/>} />
+        <Route path="/accounts" element={<Account/>} />
+        <Route path="/developer" element={<QueryWriter/>} />
         </Route>
         <Route path="*" element={<div className='text-center mt-20'>404 | Page Not Found</div>} />
       </Routes>

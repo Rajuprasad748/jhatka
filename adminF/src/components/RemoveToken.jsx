@@ -41,9 +41,14 @@ const RemoveToken = () => {
       setMessage("Please enter a mobile number");
       return;
     }
+    const token = localStorage.getItem("token");
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/admin/findUser/${mobile}`
+        `${import.meta.env.VITE_API_BASE_URL}/admin/findUser/${mobile}`, {
+          withCredentials: true,headers: {
+      Authorization: `Bearer ${token}`, // 🔥 sending manually
+    },
+        }
       );
       setUser(res.data);
       setMessage("");

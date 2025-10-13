@@ -34,12 +34,17 @@ const AdminUpdateContact = () => {
     setLoading(true);
     setError("");
     setSuccess("");
+    const token = localStorage.getItem("token");
 
     try {
        await axios.put(
         `${import.meta.env.VITE_API_BASE_URL}/admin/updateContactInfo`,
         { field: selectedField, value },
-        { withCredentials: true }
+        {
+          withCredentials: true,headers: {
+      Authorization: `Bearer ${token}`, // 🔥 sending manually
+    },
+        }
       );
 
       setSuccess(`${selectedField} updated successfully!`);

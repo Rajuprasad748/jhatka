@@ -78,7 +78,7 @@ const UserLogin = () => {
             </div>
           </div>
 
-          {/* Forgot password link */}
+          {/* Forgot password link
           <div className="flex justify-end">
             <Link
               to="/forgot-password"
@@ -86,7 +86,7 @@ const UserLogin = () => {
             >
               Forgot password?
             </Link>
-          </div>
+          </div> */}
 
           {/* Error message */}
           {error && (
