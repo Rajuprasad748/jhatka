@@ -3,7 +3,7 @@ import { findAllUsers, findUserByMobile } from '../services/user.services.js';
 import { adminLogin , adminLogout , verifyAdmin} from '../controllers/adminController.js';
 import { getContactInfo, updateContactField } from '../controllers/contactController.js';
 import { getAllGames, setAndProcessResult , updateGameTime ,  getGame , getResultsDatewise , showGamesToUsers , addGame , deleteGame} from '../controllers/gameController.js';
-import { addTokens , removeTokens , getAllTokens } from '../controllers/walletController.js';
+import { addTokens , removeTokens , getAllTokens , getAccountInfo } from '../controllers/walletController.js';
 import { adminAuthMiddleware } from '../middleware/adminAuthMiddleware.js';
 import {  getUserBetHistory } from '../controllers/betController.js';
 
@@ -15,6 +15,8 @@ router.get('/findUser/:mobile', findUserByMobile);
 
 router.get('/contactInfo', getContactInfo);
 router.get('/updateContactInfo', updateContactField);
+
+router.get('/account', adminAuthMiddleware , getAccountInfo);
 
 router.get('/userBetHistory', adminAuthMiddleware , getUserBetHistory)
 

@@ -17,7 +17,7 @@ export const addTokens = async (req, res) => {
   const { mobile } = req.params;
   console.log("userId123", mobile);
   try {
-    const { tokens , remark } = req.body;
+    const { tokens, remark } = req.body;
 
     console.log("tokens2", tokens);
 
@@ -26,7 +26,7 @@ export const addTokens = async (req, res) => {
         .status(400)
         .json({ message: "Tokens must be a positive number" });
     }
-    
+
     if (!remark) {
       return res.status(400).json({ message: "Remark is required" });
     }
@@ -38,7 +38,7 @@ export const addTokens = async (req, res) => {
     }
 
     const token = new Token({
-      userId : user._id,
+      userId: user._id,
       amount: tokens,
       remark,
       type: "add",
@@ -58,7 +58,7 @@ export const addTokens = async (req, res) => {
 export const removeTokens = async (req, res) => {
   try {
     const { mobile } = req.params;
-    const { tokens , remark } = req.body;
+    const { tokens, remark } = req.body;
 
     if (!tokens || tokens <= 0) {
       return res
@@ -80,7 +80,7 @@ export const removeTokens = async (req, res) => {
     }
 
     const token = new Token({
-      userId : user._id,
+      userId: user._id,
       amount: tokens,
       remark,
       type: "remove",
@@ -94,5 +94,50 @@ export const removeTokens = async (req, res) => {
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const getAccountInfo = async (req, res) => {
+ try {
+    const result = await Token.aggregate([
+      {
+        $group: {
+          _id: {
+            $dateToString: { 
+              format: "%d-%m-%Y", 
+              date: "$time",
+              timezone: "Asia/Kolkata"
+            }
+          },
+          totalAdded: {
+            $sum: {
+              $cond: [{ $eq: ["$type", "add"] }, "$amount", 0]
+            }
+          },
+          totalWithdrawn: {
+            $sum: {
+              $cond: [{ $eq: ["$type", "remove"] }, "$amount", 0]
+            }
+          },
+          // Store a raw date value for sorting
+          sortDate: { $min: "$time" }
+        }
+      },
+      {
+        $sort: { sortDate: -1 } // ✅ Sort by actual date (latest first)
+      },
+      {
+        $project: {
+          _id: 1,
+          totalAdded: 1,
+          totalWithdrawn: 1
+        }
+      }
+    ]);
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
   }
 };

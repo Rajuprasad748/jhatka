@@ -15,13 +15,6 @@ const userSchema = new mongoose.Schema(
       unique: true,
       match: /^[0-9]{10}$/, // Ensures 10-digit mobile number
     },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, // Email validation
-    },
     password: {
       type: String,
       required: true,
@@ -29,7 +22,7 @@ const userSchema = new mongoose.Schema(
     },
     walletBalance: {
       type: Number,
-      default: 1500, // ✅ Default balance for new users
+      default: 49, // ✅ Default balance for new users
       min: 0,        // Prevents negative balance
     },
   },

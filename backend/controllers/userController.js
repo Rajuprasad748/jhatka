@@ -8,7 +8,7 @@ export const registerUser = async (req, res) => {
     const { name, mobile, email, password } = req.body;
 
     // 1. Validate input
-    if (!name || !mobile || !email || !password) {
+    if (!name || !mobile || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
     // 2. Check if user already exists
@@ -19,18 +19,15 @@ export const registerUser = async (req, res) => {
       .json({ message: "User already exists with this mobile number" });
     }
     
-    console.log("Registering user:", { name, mobile, email });
     // 3. Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Debug log (don’t log raw password in production!)
-    console.log("Registering user:", { name, mobile, email });
 
     // 4. Save user in DB
     const user = await User.create({
       name,
       mobile,
-      email,
       password: hashedPassword,
     });
 

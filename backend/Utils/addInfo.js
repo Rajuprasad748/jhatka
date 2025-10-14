@@ -12,14 +12,10 @@ const seedData = async () => {
     console.log("MongoDB connected ✅");
 
     // Clear existing contact info (optional)
-    await ContactInfo.deleteMany({});
 
     // Add dummy contact info
     const contact = new ContactInfo({
-      contactNumber: "9755534587",
-      email: "Royalmoney10x@gmail.com",
-      telegram: "https://t.me/royalmoney10x",
-      instagram: "https://www.instagram.com/lamp_of_happiness_?igsh=eDIzMjhyNHIzOG5y",
+      amount: 0
     });
 
     await contact.save();
