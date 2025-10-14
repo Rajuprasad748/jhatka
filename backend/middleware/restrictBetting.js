@@ -47,8 +47,6 @@ export const restrictBetting = async (req, res, next) => {
       });
     }
 
-    console.log("object of gameId", game);
-
     if (!game) {
       return res.status(404).json({ error: "Game not found" });
     }
@@ -80,7 +78,6 @@ export const restrictBetting = async (req, res, next) => {
     }
 
     req.game = game;
-    console.log("object of restrictBetting", game);
     next();
   } catch (err) {
     console.error("Restriction check error:", err);

@@ -15,7 +15,6 @@ const multipliers = {
   fullSangam: 10000,
 };
 
-
 const convertToMongoDate = (timeString) => {
   if (!timeString) return null;
 
@@ -57,8 +56,6 @@ const convertToMongoDate = (timeString) => {
 
   return date;
 };
-
-
 
 // ✅ Utility: return last digit of sum as string
 function getLastDigitSum(arr) {
@@ -131,7 +128,6 @@ export const updateGameTime = async (req, res) => {
     if (!game) return res.status(404).json({ message: "Game not found" });
 
     console.log("objects of", openingTime, closingTime);
-    
 
     if (openingTime) {
       game.openingTime = normalizeAndConvertTime(openingTime);
@@ -175,11 +171,9 @@ export const addGame = async (req, res) => {
       !Array.isArray(closeDigits) ||
       closeDigits.length !== 3
     ) {
-      return res
-        .status(400)
-        .json({
-          message: "Open and Close digits must contain exactly 3 numbers.",
-        });
+      return res.status(400).json({
+        message: "Open and Close digits must contain exactly 3 numbers.",
+      });
     }
 
     const newGame = new Game({
@@ -290,8 +284,14 @@ export const setAndProcessResult = async (req, res) => {
       });
     }
 
-    const openResult = type === "open" ? resultDoc: await Result.findOne({ gameId, type: "open", published: true });
-    const closeResult = type === "close"? resultDoc: await Result.findOne({ gameId, type: "close", published: true });
+    const openResult =
+      type === "open"
+        ? resultDoc
+        : await Result.findOne({ gameId, type: "open", published: true });
+    const closeResult =
+      type === "close"
+        ? resultDoc
+        : await Result.findOne({ gameId, type: "close", published: true });
 
     const bets = await Bet.find({ gameId, status: "pending" });
     if (!bets || bets.length === 0) {
@@ -320,13 +320,20 @@ export const setAndProcessResult = async (req, res) => {
     }
 
     for (const bet of bets) {
+      if (type === "open" && bet.betType === "jodi") {
+        return res.json({
+          message: `🎯 ${type.toUpperCase()} result declared and bets processed successfully`,
+          result: resultDoc,
+        });
+      }
       let isWinner = false;
       let winningAmount = 0;
       const betDigitsStr = String(bet.digits);
 
       // SINGLE DIGIT
       if (bet.betType === "singleDigit") {
-        const resForMarket = bet.marketType === "open" ? openResult : closeResult;
+        const resForMarket =
+          bet.marketType === "open" ? openResult : closeResult;
         if (resForMarket) {
           const last = getLastDigitSum(resForMarket.value);
           if (betDigitsStr === last) isWinner = true;
@@ -334,7 +341,12 @@ export const setAndProcessResult = async (req, res) => {
       }
 
       // JODI
-      if (type === "close" && bet.betType === "jodi" && openResult && closeResult) {
+      if (
+        type === "close" &&
+        bet.betType === "jodi" &&
+        openResult &&
+        closeResult
+      ) {
         const jodi =
           getLastDigitSum(openResult.value) +
           getLastDigitSum(closeResult.value);
@@ -367,7 +379,12 @@ export const setAndProcessResult = async (req, res) => {
       }
 
       // FULL SANGAM
-      if (type === "close" && bet.betType === "fullSangam" && openResult && closeResult) {
+      if (
+        type === "close" &&
+        bet.betType === "fullSangam" &&
+        openResult &&
+        closeResult
+      ) {
         const openStr = openResult.value.join("");
         const closeStr = closeResult.value.join("");
         if (betDigitsStr === openStr + closeStr) isWinner = true;
