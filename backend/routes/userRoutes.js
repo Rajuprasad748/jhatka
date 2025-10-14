@@ -22,6 +22,6 @@ router.get("/contactInfo", getContactInfo);
 
 router.post("/place-bet", authMiddleware, restrictBetting, placeBet);
 router.get("/betHistory", authMiddleware, getBetHistory);
-router.get("/getResultDatewise", authMiddleware, getResultsDatewise);
+router.get("/getResultDatewise", getResultsDatewise);
 
 export default router;

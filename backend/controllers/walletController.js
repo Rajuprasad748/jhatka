@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import Token from "../models/token.model.js";
+import ContactInfo from "../models/contactInfo.model.js";
 
 export const getAllTokens = async (req, res) => {
   try {
@@ -19,8 +20,6 @@ export const addTokens = async (req, res) => {
   try {
     const { tokens, remark } = req.body;
 
-    console.log("tokens2", tokens);
-
     if (!tokens || tokens <= 0) {
       return res
         .status(400)
@@ -32,7 +31,6 @@ export const addTokens = async (req, res) => {
     }
 
     const user = await User.findOne({ mobile });
-    console.log(user);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -47,6 +45,12 @@ export const addTokens = async (req, res) => {
 
     user.walletBalance += Number(tokens);
     await user.save();
+
+    await ContactInfo.findOneAndUpdate(
+      {},
+      { $inc: { amount: Number(tokens) } },
+      { new: true }
+    );
 
     res.json(user);
   } catch (error) {
@@ -90,6 +94,12 @@ export const removeTokens = async (req, res) => {
     // Deduct tokens
     user.walletBalance -= Number(tokens);
     await user.save();
+
+    await ContactInfo.findOneAndUpdate(
+      {},
+      { $inc: { amount: -Number(tokens) } },
+      { new: true }
+    );
 
     res.json(user);
   } catch (error) {

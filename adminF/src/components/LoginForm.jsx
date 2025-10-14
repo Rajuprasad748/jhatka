@@ -17,7 +17,6 @@ const LoginForm = () => {
 
     try {
       await login({ mobile, password });
-      toast.success("Admin logged in successfully!");
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");

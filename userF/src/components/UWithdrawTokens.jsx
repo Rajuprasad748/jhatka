@@ -1,12 +1,26 @@
-import React, { useState } from "react";
+import React, { useState , useEffect } from "react";
 import { useAuth } from "../context/useAuth";
+import axios from "axios";
 
 const UWithdrawTokens = () => {
   const [amount, setAmount] = useState("");
+  const [contactNum , setContactNum] = useState("");
   const { user } = useAuth();
 
+  const Contact = async () => {
+    try {
+    const res =  await axios.get(`${import.meta.env.VITE_API_BASE_URL}/users/contactInfo`);
+    setContactNum(res.data[0].contactNumber);
+    } catch (error) {
+      console.error("Error fetching contact info:", error);
+    }
+  };
+
+  useEffect( () => {
+    Contact();
+  });
+
   const presetAmounts = [1000, 2000, 5000, 10000];
-  const adminNumber = "917489177858"; // ✅ Admin WhatsApp number (international format)
 
   const handleWhatsAppRedirect = () => {
     if (!amount) {
@@ -15,7 +29,7 @@ const UWithdrawTokens = () => {
     }
 
     const message = `I want to withdraw ₹${amount} from my account\n${user?.mobile}`;
-    const url = `https://wa.me/${adminNumber}?text=${encodeURIComponent(message)}`;
+    const url = `https://wa.me/${contactNum}?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank"); // opens WhatsApp
   };
 

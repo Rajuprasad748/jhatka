@@ -6,7 +6,6 @@ import { toast } from "react-toastify";
 const UserSignUp = () => {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -21,19 +20,20 @@ const UserSignUp = () => {
     }
 
     const data = {
-        name,
-        mobile,
-        email,
-        password,
-      }
+      name,
+      mobile,
+      password,
+    };
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/users/register`, data);
+      await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/users/register`,
+        data
+      );
 
       toast.success("Registration successful!");
       setName("");
       setMobile("");
-      setEmail("");
       setPassword("");
       setConfirmPassword("");
       navigate("/login");
@@ -77,23 +77,9 @@ const UserSignUp = () => {
               className="w-full px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500 text-base"
               value={mobile}
               onChange={(e) => {
-                if (/^\d{0,10}$/.test(e.target.value)) setMobile(e.target.value);
+                if (/^\d{0,10}$/.test(e.target.value))
+                  setMobile(e.target.value);
               }}
-              required
-            />
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              placeholder="Your Email"
-              className="w-full px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500 text-base"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>

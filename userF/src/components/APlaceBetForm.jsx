@@ -151,6 +151,29 @@ const APlaceBetForm = () => {
       }
     }
 
+    if (betTypeMap[selectedOption] === "triplePana") {
+      const val = Object.values(formData.digits).join("-");
+      if (val[0] !== val[1] || val[1] !== val[2] || val[0] !== val[2]) {
+        setError("All three digits must be same for Triple Pana");
+        return;
+      }
+    }
+
+    if (betTypeMap[selectedOption] === "doublePana") {
+      const val = Object.values(formData.digits).join("-"); // ensure string comparison
+
+      // ✅ Check for exactly two *consecutive* same digits
+      if (
+        !(
+          (val[0] === val[1] && val[1] !== val[2]) ||
+          (val[1] === val[2] && val[0] !== val[1])
+        )
+      ) {
+        setError("Two consecutive digits must be the same for Double Pana");
+        return;
+      }
+    }
+
     const payload = {
       user: user?._id,
       gameId: game._id,
@@ -179,6 +202,9 @@ const APlaceBetForm = () => {
           },
         }
       );
+
+      console.log(res);
+      console.log(res.data);
 
       if (res.data.walletBalance !== undefined) {
         updateUser((prev) => ({

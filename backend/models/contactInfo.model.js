@@ -21,6 +21,14 @@ const contactInfoSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  amount:{
+    type: Number,
+    default: 0,
+  },
+  marquee: {
+    type: String,
+    trim: true,
+  }
 }, { timestamps: true });
 
 const ContactInfo = mongoose.model("ContactInfo", contactInfoSchema);

@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AiFillHome } from "react-icons/ai";
 import { useAdminAuth } from "../context/useAuth";
+import axios from "axios";
 
 function Header() {
+  const token = localStorage.getItem("token");
   const colors = [
     "text-red-500",
     "text-yellow-400",
@@ -17,6 +19,7 @@ function Header() {
   ];
   const [currentColor, setCurrentColor] = useState(0);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [amount, setAmount] = useState(0);
 
   const { admin, logout } = useAdminAuth();
   const navigate = useNavigate();
@@ -27,6 +30,22 @@ function Header() {
     }, 500);
     return () => clearInterval(interval);
   }, [colors.length]);
+
+  useEffect(() => {
+    const fetchAmount = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/admin/contactInfo`
+        );
+        console.log(response.data);
+        setAmount(response.data[0].amount);
+      } catch (error) {
+        console.error("Error fetching amount:", error);
+      }
+    };
+
+    fetchAmount();
+  }, [admin]);
 
   const handleLogout = async () => {
     try {
@@ -56,6 +75,13 @@ function Header() {
           >
             RoyalMoney10x
           </span>
+        </div>
+        <div
+          className={`font-bold ${token ? "block" : "hidden"} ${
+            amount >= 0 ? "text-green-500" : "text-red-500"
+          } text-lg sm:text-xl md:text-2xl mx-8`}
+        >
+          {token ? `Balance: ₹${amount}` : "Welcome, Admin"}
         </div>
 
         {/* Auth Buttons */}
