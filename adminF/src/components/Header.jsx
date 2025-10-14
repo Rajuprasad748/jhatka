@@ -37,7 +37,6 @@ function Header() {
         const response = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/admin/contactInfo`
         );
-        console.log(response.data);
         setAmount(response.data[0].amount);
       } catch (error) {
         console.error("Error fetching amount:", error);
