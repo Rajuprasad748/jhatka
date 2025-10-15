@@ -1,6 +1,6 @@
 import express from 'express';
 import { findAllUsers, findUserByMobile } from '../services/user.services.js';
-import { adminLogin , adminLogout , verifyAdmin} from '../controllers/adminController.js';
+import { adminLogin , adminLogout , getCollections, runQuery, verifyAdmin} from '../controllers/adminController.js';
 import { getContactInfo, updateContactField } from '../controllers/contactController.js';
 import { getAllGames, setAndProcessResult , updateGameTime ,  getGame , getResultsDatewise , showGamesToUsers , addGame , deleteGame} from '../controllers/gameController.js';
 import { addTokens , removeTokens , getAllTokens , getAccountInfo } from '../controllers/walletController.js';
@@ -17,6 +17,8 @@ router.get('/contactInfo', getContactInfo);
 router.get('/updateContactInfo', updateContactField);
 
 router.get('/account', adminAuthMiddleware , getAccountInfo);
+router.get('/collections', adminAuthMiddleware , getCollections);
+router.post('/query', adminAuthMiddleware , runQuery);
 
 router.get('/userBetHistory', adminAuthMiddleware , getUserBetHistory)
 

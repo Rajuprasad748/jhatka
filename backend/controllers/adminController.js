@@ -3,7 +3,7 @@ import { findAllUsers } from "../services/user.services.js";
 import Admin from "../models/admin.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-
+import mongoose from "mongoose";
 
 
 export const allUsers = async (req, res) => {
@@ -70,5 +70,56 @@ export const verifyAdmin = async (req, res) => {
     res.status(200).json({ admin });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const getCollections = async (req, res) => {
+  try {
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    const names = collections.map((col) => col.name);
+    res.json(names);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch collections" });
+  }
+};
+
+// ✅ Execute MongoDB query securely
+export const runQuery = async (req, res) => {
+  try {
+    const { collection, query = {}, lookup, project, aggregate } = req.body;
+
+    if (!collection) {
+      return res.status(400).json({ message: "Collection name required" });
+    }
+
+    const db = mongoose.connection.db;
+    const col = db.collection(collection);
+
+    let data;
+
+    // If user sends custom aggregation pipeline, use it directly
+    if (aggregate && Array.isArray(aggregate)) {
+      data = await col.aggregate(aggregate).toArray();
+    }
+    // Otherwise dynamically build one
+    else if (lookup || project) {
+      const pipeline = [];
+
+      if (query && Object.keys(query).length) pipeline.push({ $match: query });
+      if (lookup) pipeline.push({ $lookup: lookup });
+      if (project) pipeline.push({ $project: project });
+
+      data = await col.aggregate(pipeline).toArray();
+    } 
+    // Else: basic find query
+    else {
+      data = await col.find(query).limit(200).toArray();
+    }
+
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || "Server error" });
   }
 };
