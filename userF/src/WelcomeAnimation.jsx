@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "./WelcomeAnimation.css";
+import "./welcomeAnimation.css";
 
 function WelcomeAnimation({ onFinish }) {
   const [show, setShow] = useState(true);
