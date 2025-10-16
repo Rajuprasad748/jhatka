@@ -19,6 +19,7 @@ import CustomerSupport from "./components/CustomerSupport";
 import PersonalGame from "./components/PersonalGame";
 
 function App() {
+
   return (
     <>
       <ToastContainer
@@ -26,50 +27,48 @@ function App() {
         autoClose={3000}
         hideProgressBar={false}
         newestOnTop={false}
-        closeOnClick={true} // ✅ Enables manual closing by mouse
+        closeOnClick={true}
         pauseOnFocusLoss={false}
         pauseOnHover={false}
         draggable={true}
         theme="colored"
       />
+        <div className="flex flex-col min-h-screen max-w-screen overflow-hidden">
+          <Header />
 
-      <div className="flex flex-col min-h-screen max-w-screen overflow-hidden">
-        <Header />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<UHome />} />
+            <Route path="/signup" element={<UserSignUp />} />
+            <Route path="/login" element={<UserLogin />} />
+            <Route path="/gameRates" element={<GameRates />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/customerSupport" element={<CustomerSupport />} />
 
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<UHome />} />
-          <Route path="/signup" element={<UserSignUp />} />
-          <Route path="/login" element={<UserLogin />} />
-          <Route path="/gameRates" element={<GameRates />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/customerSupport" element={<CustomerSupport />} />
-          
+            {/* Protected Routes */}
+            <Route element={<PrivateRoute />}>
+              <Route
+                path="/showBetDigitsHistory"
+                element={<ShowBetDigitsHistory />}
+              />
+              <Route path="/betHistory" element={<BetHistory />} />
+              <Route path="/addTokens" element={<UAddMoney />} />
+              <Route path="/withdrawTokens" element={<UWithdrawTokens />} />
+              <Route path="/tokenHistory" element={<TokenHistory />} />
+              <Route path="/personalGame" element={<PersonalGame />} />
+              <Route path="/userProfile" element={<UserCard />} />
+              <Route path="/game/:name" element={<PlaceBetForm />} />
+            </Route>
 
-          {/* Protected Routes - only check once here */}
-          <Route element={<PrivateRoute />}>
+            {/* 404 Fallback */}
             <Route
-              path="/showBetDigitsHistory"
-              element={<ShowBetDigitsHistory />}
+              path="*"
+              element={
+                <div className="text-center mt-20">404 | Page Not Found</div>
+              }
             />
-            <Route path="/betHistory" element={<BetHistory />} />
-            <Route path="/addTokens" element={<UAddMoney />} />
-            <Route path="/withdrawTokens" element={<UWithdrawTokens />} />
-            <Route path="/tokenHistory" element={<TokenHistory />} />
-            <Route path="/personalGame" element={<PersonalGame />} />
-            <Route path="/userProfile" element={<UserCard />} />
-            <Route path="/game/:name" element={<PlaceBetForm />} />
-          </Route>
-
-          {/* 404 Fallback */}
-          <Route
-            path="*"
-            element={
-              <div className="text-center mt-20">404 | Page Not Found</div>
-            }
-          />
-        </Routes>
-      </div>
+          </Routes>
+        </div>
     </>
   );
 }

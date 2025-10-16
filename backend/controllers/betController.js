@@ -82,6 +82,7 @@ export const getBetHistory = async (req, res) => {
   }
 };
 
+
 export const getUserBetHistory = async (req, res) => {
   try {
     const userId = req.query.userId;
@@ -99,3 +100,12 @@ export const getUserBetHistory = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const getAllBets = async (req, res) => {
+  try {
+    const bets = await Bet.find().populate("user", "mobile name").populate("gameId", "name").sort({ createdAt: -1 });;
+    res.status(200).json(bets);
+  } catch (error) {
+    console.log(error.message);
+  }
+}

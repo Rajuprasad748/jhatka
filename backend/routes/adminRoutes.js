@@ -5,12 +5,13 @@ import { getContactInfo, updateContactField } from '../controllers/contactContro
 import { getAllGames, setAndProcessResult , updateGameTime ,  getGame , getResultsDatewise , showGamesToUsers , addGame , deleteGame} from '../controllers/gameController.js';
 import { addTokens , removeTokens , getAllTokens , getAccountInfo } from '../controllers/walletController.js';
 import { adminAuthMiddleware } from '../middleware/adminAuthMiddleware.js';
-import {  getUserBetHistory } from '../controllers/betController.js';
+import {  getAllBets, getUserBetHistory } from '../controllers/betController.js';
 
 const router = express.Router();
 
 router.get('/all-users', findAllUsers);
 router.get('/findUser/:mobile', findUserByMobile);
+router.get('/allBets', getAllBets);
 
 
 router.get('/contactInfo', getContactInfo);

@@ -37,6 +37,10 @@ const ADashboard = () => {
     Link: '/removeTokenHistory',
   },
   {
+    title: 'User Bet Record',
+    Link: '/userBetRecord',
+  },
+  {
     title: 'Hide Games',
     Link: '/hideGames',
   },

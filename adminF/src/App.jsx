@@ -18,6 +18,7 @@ import UpdateContactInfo from './components/UpdateContactInfo';
 import UserBetHistory from './components/UserBetHistory';
 import Account from './components/Account';
 import QueryWriter from './pages/QueryWriter';
+import UserBetRecord from './components/UserBetRecord';
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
         <Route path="/users/userBetDetails" element={<UserBetHistory/>} />
         <Route path="/accounts" element={<Account/>} />
         <Route path="/developer" element={<QueryWriter/>} />
+        <Route path="/userBetRecord" element={<UserBetRecord/>} />
         </Route>
         <Route path="*" element={<div className='text-center mt-20'>404 | Page Not Found</div>} />
       </Routes>
