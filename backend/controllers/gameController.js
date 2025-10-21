@@ -229,20 +229,33 @@ export const showGamesToUsers = async (req, res) => {
 
 // ----------------- Set result & process bets (merged) -----------------
 export const setAndProcessResult = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { type, value } = req.body; // type = "open" | "close"
     const { gameId } = req.params;
 
+    // ✅ Validation
     if (!type || !["open", "close"].includes(type)) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({ message: "Invalid or missing type" });
     }
     if (!value || typeof value !== "string" || value.length === 0) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({ message: "Invalid or missing value" });
     }
 
-    const game = await Game.findById(gameId);
-    if (!game) return res.status(404).json({ message: "Game not found" });
+    const game = await Game.findById(gameId).session(session);
+    if (!game) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: "Game not found" });
+    }
 
+    // ✅ Time checking
     const gameTime =
       type === "open"
         ? getTimeOnly(game.openingTime)
@@ -252,16 +265,16 @@ export const setAndProcessResult = async (req, res) => {
       now.getMinutes()
     ).padStart(2, "0")}`;
 
-    console.log("object of game time", gameTime, currentTime);
-
     if (gameTime && currentTime !== gameTime) {
       console.warn(
         `⚠️ Publishing ${type} result at ${currentTime}, scheduled for ${gameTime}`
       );
     }
 
+    // ✅ Prepare digits
     const digits = value.split("").map((d) => Number(d));
 
+    // ✅ Save result
     const resultDoc = new Result({
       gameId: new mongoose.Types.ObjectId(gameId),
       gameName: game.name,
@@ -271,30 +284,42 @@ export const setAndProcessResult = async (req, res) => {
       publishedAt: now,
       scheduledTime: now,
     });
+    await resultDoc.save({ session });
 
-    await resultDoc.save();
-
+    // ✅ Update game
     if (type === "open") {
-      await Game.findByIdAndUpdate(gameId, {
-        openDigits: digits,
-      });
+      await Game.findByIdAndUpdate(gameId, { openDigits: digits }, { session });
     } else {
-      await Game.findByIdAndUpdate(gameId, {
-        closeDigits: digits,
-      });
+      await Game.findByIdAndUpdate(
+        gameId,
+        { closeDigits: digits },
+        { session }
+      );
     }
 
+    // ✅ Get results for processing bets
     const openResult =
       type === "open"
         ? resultDoc
-        : await Result.findOne({ gameId, type: "open", published: true });
+        : await Result.findOne({
+            gameId,
+            type: "open",
+            published: true,
+          }).session(session);
     const closeResult =
       type === "close"
         ? resultDoc
-        : await Result.findOne({ gameId, type: "close", published: true });
+        : await Result.findOne({
+            gameId,
+            type: "close",
+            published: true,
+          }).session(session);
 
-    const bets = await Bet.find({ gameId, status: "pending" });
+    // ✅ Fetch pending bets
+    const bets = await Bet.find({ gameId, status: "pending" }).session(session);
     if (!bets || bets.length === 0) {
+      await session.commitTransaction();
+      session.endSession();
       return res.json({
         message: "Result declared, no bets to process",
         result: resultDoc,
@@ -304,21 +329,20 @@ export const setAndProcessResult = async (req, res) => {
     const bulkBetOps = [];
     const userIncrements = new Map();
 
-    // 🔹 Helper for new PANA logic
+    // 🔹 Helper for PANA logic
     function checkPanaWin(userInput, answer, panaType) {
       if (userInput.length !== 3 || answer.length !== 3) return false;
-
       let matchedPositions = 0;
       for (let i = 0; i < 3; i++) {
         if (userInput[i] === answer[i]) matchedPositions++;
       }
-
       if (panaType === "singlePana") return matchedPositions >= 1;
       if (panaType === "doublePana") return matchedPositions >= 2;
       if (panaType === "triplePana") return matchedPositions === 3;
       return false;
     }
 
+    // ✅ Process each bet
     for (const bet of bets) {
       if (type === "open" && bet.betType === "jodi") {
         return res.json({
@@ -326,6 +350,7 @@ export const setAndProcessResult = async (req, res) => {
           result: resultDoc,
         });
       }
+
       let isWinner = false;
       let winningAmount = 0;
       const betDigitsStr = String(bet.digits);
@@ -353,7 +378,7 @@ export const setAndProcessResult = async (req, res) => {
         if (betDigitsStr === jodi) isWinner = true;
       }
 
-      // 🔹 NEW PANA LOGIC
+      // PANA LOGIC
       if (["singlePana", "doublePana", "triplePana"].includes(bet.betType)) {
         const resForMarket =
           bet.marketType === "open" ? openResult : closeResult;
@@ -390,7 +415,7 @@ export const setAndProcessResult = async (req, res) => {
         if (betDigitsStr === openStr + closeStr) isWinner = true;
       }
 
-      // Settlement
+      // ✅ Settlement
       if (isWinner) {
         winningAmount =
           (Number(bet.points) || 0) * (multipliers[bet.betType] || 1);
@@ -399,7 +424,6 @@ export const setAndProcessResult = async (req, res) => {
           userIdStr,
           (userIncrements.get(userIdStr) || 0) + winningAmount
         );
-
         bulkBetOps.push({
           updateOne: {
             filter: { _id: bet._id },
@@ -416,8 +440,10 @@ export const setAndProcessResult = async (req, res) => {
       }
     }
 
-    if (bulkBetOps.length) await Bet.bulkWrite(bulkBetOps);
+    // ✅ Bulk update bets
+    if (bulkBetOps.length) await Bet.bulkWrite(bulkBetOps, { session });
 
+    // ✅ Bulk update user wallet balances
     if (userIncrements.size > 0) {
       const bulkUserOps = [];
       for (const [userId, amount] of userIncrements.entries()) {
@@ -428,16 +454,21 @@ export const setAndProcessResult = async (req, res) => {
           },
         });
       }
-      if (bulkUserOps.length) await User.bulkWrite(bulkUserOps);
+      if (bulkUserOps.length) await User.bulkWrite(bulkUserOps, { session });
     }
 
-    console.log("✅ Bets processed successfully");
+    // ✅ Commit transaction
+    await session.commitTransaction();
+    session.endSession();
 
+    console.log("✅ Bets processed successfully");
     return res.json({
       message: `🎯 ${type.toUpperCase()} result declared and bets processed successfully`,
       result: resultDoc,
     });
   } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
     console.error("❌ Error in setAndProcessResult:", err);
     return res.status(500).json({ message: err.message || "Server error" });
   }

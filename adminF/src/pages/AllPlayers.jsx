@@ -6,8 +6,11 @@ import { LuDownload } from "react-icons/lu";
 
 const AllPlayers = () => {
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortType, setSortType] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,6 +20,7 @@ const AllPlayers = () => {
           `${import.meta.env.VITE_API_BASE_URL}/admin/all-users`
         );
         setUsers(res.data);
+        setFilteredUsers(res.data);
       } catch (err) {
         console.error("Failed to fetch users:", err);
         setError("Failed to load users. Please try again later.");
@@ -34,8 +38,8 @@ const AllPlayers = () => {
 
   // ✅ Export to Excel
   const exportToExcel = () => {
-    if (!users.length) return alert("No data to export!");
-    const data = users.map((user, index) => ({
+    if (!filteredUsers.length) return alert("No data to export!");
+    const data = filteredUsers.map((user, index) => ({
       "#": index + 1,
       ID: user._id,
       Name: user.name,
@@ -46,8 +50,40 @@ const AllPlayers = () => {
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
-    XLSX.writeFile(workbook, `AllUsers_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `AllUsers_${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
   };
+
+  // ✅ Search filter
+  useEffect(() => {
+    let filtered = [...users];
+    if (searchTerm.trim()) {
+      filtered = filtered.filter(
+        (user) =>
+          user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.mobile?.toString().includes(searchTerm)
+      );
+    }
+
+    // ✅ Sorting
+    if (sortType === "walletAsc") {
+      filtered.sort((a, b) => (a.walletBalance ?? 0) - (b.walletBalance ?? 0));
+    } else if (sortType === "walletDesc") {
+      filtered.sort((a, b) => (b.walletBalance ?? 0) - (a.walletBalance ?? 0));
+    } else if (sortType === "dateAsc") {
+      filtered.sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      );
+    } else if (sortType === "dateDesc") {
+      filtered.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+    }
+
+    setFilteredUsers(filtered);
+  }, [searchTerm, sortType, users]);
 
   // ✅ Skeleton components
   const SkeletonCard = () => (
@@ -82,19 +118,44 @@ const AllPlayers = () => {
 
       {!loading && (
         <p className="text-center text-sm text-gray-600 mb-4">
-          Total Users: <span className="font-bold">{users.length}</span>
+          Total Users: <span className="font-bold">{filteredUsers.length}</span>
         </p>
       )}
 
-      {/* ✅ Download Button */}
-      {!loading && users.length > 0 && (
-        <div className="flex justify-end mb-3">
-          <button
-            onClick={exportToExcel}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition flex items-center justify-center"
+      {/* ✅ Search and Sort Section */}
+      {!loading && (
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 gap-2">
+          {/* Search Bar */}
+          <input
+            type="text"
+            placeholder="Search by name or mobile..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="border border-gray-400 rounded-lg px-3 py-2 w-full md:w-1/3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+
+          {/* Sort Dropdown */}
+          <select
+            value={sortType}
+            onChange={(e) => setSortType(e.target.value)}
+            className="border border-gray-400 rounded-lg px-3 py-2 w-full md:w-1/4 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            Download <LuDownload className="inline-block ml-1" />
-          </button>
+            <option value="">Sort by</option>
+            <option value="walletAsc">Wallet Balance (Low → High)</option>
+            <option value="walletDesc">Wallet Balance (High → Low)</option>
+            <option value="dateAsc">Date (Oldest → Newest)</option>
+            <option value="dateDesc">Date (Newest → Oldest)</option>
+          </select>
+
+          {/* Download Button */}
+          {filteredUsers.length > 0 && (
+            <button
+              onClick={exportToExcel}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition flex items-center justify-center"
+            >
+              Download <LuDownload className="inline-block ml-1" />
+            </button>
+          )}
         </div>
       )}
 
@@ -139,8 +200,8 @@ const AllPlayers = () => {
         }`}
       >
         {!loading &&
-          (users.length > 0 ? (
-            users.map((user, index) => (
+          (filteredUsers.length > 0 ? (
+            filteredUsers.map((user, index) => (
               <div
                 key={user._id}
                 className="border rounded-lg p-4 shadow-sm bg-white"
@@ -189,7 +250,7 @@ const AllPlayers = () => {
         }`}
       >
         {!loading &&
-          (users.length > 0 ? (
+          (filteredUsers.length > 0 ? (
             <table className="w-full table-auto border border-gray-300">
               <thead className="sticky top-0 bg-gray-300">
                 <tr>
@@ -203,7 +264,7 @@ const AllPlayers = () => {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user, index) => (
+                {filteredUsers.map((user, index) => (
                   <tr key={user._id} className="hover:bg-gray-50">
                     <td className="border px-4 py-2">{index + 1}</td>
                     <td className="border px-4 py-2">{user._id}</td>

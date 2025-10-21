@@ -35,7 +35,7 @@ function Header() {
           {/* Center Title with animated gradient */}
           <div className="absolute left-1/2 transform -translate-x-1/2 hidden lg:block">
             <span className="text-lg sm:text-xl md:text-3xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-yellow-500 to-blue-500 animate-gradient bg-[length:300%_300%]">
-              RoyalMoney9x.com
+              RoyalMoney10x.com
             </span>
           </div>
 

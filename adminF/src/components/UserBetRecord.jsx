@@ -13,7 +13,10 @@ function UserBetRecord() {
     betType: "",
     startDate: "",
     endDate: "",
+    gameName: "", // Added Game Name filter
   });
+
+  const [gameNames, setGameNames] = useState([]); // Unique game names for dropdown
 
   // Fetch all bets
   const fetchBets = async () => {
@@ -30,6 +33,11 @@ function UserBetRecord() {
       );
       setBets(res.data);
       setFilteredBets(res.data);
+
+      // Extract unique game names for filter dropdown
+      const uniqueGames = [...new Set(res.data.map((bet) => bet.gameName))];
+      setGameNames(uniqueGames);
+
       setLoading(false);
     } catch (err) {
       console.error("Error fetching bets:", err);
@@ -70,6 +78,9 @@ function UserBetRecord() {
         (b) => new Date(b.date) <= new Date(filters.endDate)
       );
 
+    if (filters.gameName)
+      filtered = filtered.filter((b) => b.gameName === filters.gameName);
+
     setFilteredBets(filtered);
   };
 
@@ -81,6 +92,7 @@ function UserBetRecord() {
       betType: "",
       startDate: "",
       endDate: "",
+      gameName: "",
     });
     setFilteredBets(bets);
   };
@@ -98,7 +110,7 @@ function UserBetRecord() {
           ...bet,
           totalPoints: bet.points,
           totalWinningAmount: bet.winningAmount,
-          count: 1, // track how many bets merged
+          count: 1,
         };
       } else {
         grouped[key].totalPoints += bet.points;
@@ -109,7 +121,7 @@ function UserBetRecord() {
 
     const result = Object.values(grouped).map((item) => ({
       ...item,
-      isGrouped: item.count > 1, // flag to highlight grouped rows
+      isGrouped: item.count > 1,
     }));
 
     setFilteredBets(result);
@@ -122,7 +134,7 @@ function UserBetRecord() {
       </h2>
 
       {/* Filters */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4">
         <select
           name="marketType"
           value={filters.marketType}
@@ -160,6 +172,20 @@ function UserBetRecord() {
           <option value="triplePana">Triple Pana</option>
           <option value="halfSangam">Half Sangam</option>
           <option value="fullSangam">Full Sangam</option>
+        </select>
+
+        <select
+          name="gameName"
+          value={filters.gameName}
+          onChange={handleFilterChange}
+          className="border p-2 rounded"
+        >
+          <option value="">Game Name</option>
+          {gameNames.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
         </select>
 
         <input
@@ -205,7 +231,6 @@ function UserBetRecord() {
       {/* Table */}
       <div className="overflow-x-auto">
         {loading ? (
-          // Skeleton loader
           <div className="space-y-2">
             {Array(5)
               .fill()

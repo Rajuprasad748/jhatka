@@ -64,6 +64,10 @@ const ADashboard = () => {
     title: 'For Developers',
     Link: '/developer',
   },
+  {
+    title: 'Bet Recall',
+    Link: '/betRecall',
+  },
 ];
 
 

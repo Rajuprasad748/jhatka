@@ -20,7 +20,9 @@ const ShowBetDigitsHistory = () => {
     const fetchResults = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/users/getResultDatewise?gameId=${gameId}`
+          `${
+            import.meta.env.VITE_API_BASE_URL
+          }/users/getResultDatewise?gameId=${gameId}`
         );
         setResults(res.data);
       } catch (err) {
@@ -77,7 +79,7 @@ const ShowBetDigitsHistory = () => {
       {results.length === 0 ? (
         <p className="text-center text-gray-500">No results available</p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+        <div className="text-white grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-8 xl:grid-cols-10 gap-2">
           {results.map((item, idx) => {
             const openDigits = item.open || [];
             const closeDigits = item.close || [];
@@ -87,41 +89,54 @@ const ShowBetDigitsHistory = () => {
             return (
               <div
                 key={idx}
-                className="flex flex-col items-center justify-center border border-gray-800 shadow-md rounded-lg p-4 bg-slate-700 hover:shadow-lg transition"
+                className="flex flex-col items-center justify-start border-gray-800 p-2 rounded-lg bg-slate-700 shadow-sm hover:shadow-md transition w-full"
               >
-                <p className="text-sm text-white mb-2">
-                  {new Date(item._id.date).toLocaleDateString("en-IN", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </p>
+                {/* Date */}
+                <p className="md:text-xs font-medium">{item._id.date}</p>
+                {/* Jodi */}
 
-                <div className="flex w-full justify-between text-center items-center">
-                  {/* Open Section */}
-                  <div className="flex-1">
-                    <p className="text-white text-xs">Open</p>
-                    <p className="text-lg font-bold text-green-600">
-                      {openDigits?.join("") || "-"}
-                    </p>
+                {/* Open & Close vertical digits */}
+                <div className="flex w-full justify-between items-center">
+                  {/* Open Digits */}
+                  <div className="flex flex-col items-center flex-1">
+                    {openDigits.length > 0 ? (
+                      openDigits.map((d, i) => (
+                        <span
+                          key={i}
+                          className="font-semibold text-sm md:text-base"
+                        >
+                          {d}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="font-semibold text-sm md:text-base">
+                        -
+                      </span>
+                    )}
                   </div>
 
-                  {/* Middle Sum Section */}
-                  <div className="flex items-center px-3 text-3xl">
-                    <p className="text-green-500 font-bold ">
-                      {openSumDigit}
+                  <span>
+                    <p className="text-sm md:text-base font-bold text-yellow-400">
+                      {openSumDigit}{closeSumDigit}
                     </p>
-                    <p className="text-red-500 font-bold">
-                      {closeSumDigit}
-                    </p>
-                  </div>
+                  </span>
 
-                  {/* Close Section */}
-                  <div className="flex-1">
-                    <p className="text-white text-xs">Close</p>
-                    <p className="text-lg font-bold text-red-600">
-                      {closeDigits?.join("") || "-"}
-                    </p>
+                  {/* Close Digits */}
+                  <div className="flex flex-col items-center flex-1">
+                    {closeDigits.length > 0 ? (
+                      closeDigits.map((d, i) => (
+                        <span
+                          key={i}
+                          className=" font-semibold text-sm md:text-base"
+                        >
+                          {d}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="font-semibold text-sm md:text-base">
+                        -
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

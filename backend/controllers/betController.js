@@ -1,6 +1,7 @@
 import Bet from "../models/placeBet.js";
 import User from "../models/User.js";
 import Game from "../models/addGame.js";
+import mongoose from "mongoose";
 
 // POST /api/bets
 export const placeBet = async (req, res) => {
@@ -108,4 +109,52 @@ export const getAllBets = async (req, res) => {
   } catch (error) {
     console.log(error.message);
   }
-}
+};
+
+
+export const recallResults = async (req , res) => {
+  const { date, gameId, marketType } = req.body;
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Fetch all bets for the game/date/market type
+    const bets = await Bet.find({
+      gameId,
+      marketType,
+      date: new Date(date), // exactly that date
+      status: { $in: ["won", "lost"] },
+    }).session(session);
+
+    for (let bet of bets) {
+      const user = await User.findById(bet.user).session(session);
+      if (!user) continue;
+
+      if (bet.status === "won") {
+
+        user.walletBalance -= bet.winningAmount;
+        // Refund bet points
+        bet.status = "pending";
+      } else if (bet.status === "lost") {
+        // User previously lost → refund bet points
+        bet.status = "pending"; // or "refunded"
+      }
+
+      await user.save({ session });
+      await bet.save({ session });
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.json({
+       success: true, message: "Results recalled successfully"
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Error recalling results:", error);
+    return { success: false, message: error.message };
+  }
+};
