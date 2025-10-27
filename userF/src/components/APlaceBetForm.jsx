@@ -184,7 +184,6 @@ const APlaceBetForm = () => {
       points: pointsValue,
     };
 
-    console.log("payload", payload);
 
     try {
       setLoading(true);
@@ -198,13 +197,10 @@ const APlaceBetForm = () => {
         {
           withCredentials: true,
           headers: {
-            Authorization: `Bearer ${token}`,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
         }
       );
-
-      console.log(res);
-      console.log(res.data);
 
       if (res.data.walletBalance !== undefined) {
         updateUser((prev) => ({

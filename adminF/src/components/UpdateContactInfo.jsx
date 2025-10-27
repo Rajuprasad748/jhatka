@@ -37,13 +37,14 @@ const AdminUpdateContact = () => {
     const token = localStorage.getItem("token");
 
     try {
-       await axios.put(
+      await axios.put(
         `${import.meta.env.VITE_API_BASE_URL}/admin/updateContactInfo`,
         { field: selectedField, value },
         {
-          withCredentials: true,headers: {
-      Authorization: `Bearer ${token}`, // 🔥 sending manually
-    },
+          withCredentials: true,
+          headers: {
+            Authorization: token ? `Bearer ${token}` : {}, // 🔥 sending manually
+          },
         }
       );
 
@@ -93,6 +94,7 @@ const AdminUpdateContact = () => {
         <option value="email">Email</option>
         <option value="telegram">Telegram</option>
         <option value="instagram">Instagram</option>
+        <option value="marquee">Message for User</option>
       </select>
 
       <label className="block mb-2 font-semibold text-gray-700">
@@ -128,6 +130,7 @@ const AdminUpdateContact = () => {
           <li>Email: {contactInfo.email}</li>
           <li>Telegram: {contactInfo.telegram}</li>
           <li>Instagram: {contactInfo.instagram}</li>
+          <li>msg: {contactInfo.marquee}</li>
         </ul>
       </div>
     </div>

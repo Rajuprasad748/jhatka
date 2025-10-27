@@ -41,12 +41,12 @@ export const adminLogin = async (req, res) => {
     const token = jwt.sign(
       { id: admin._id },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "7d" }
     );
 
     res.cookie("token", token, { 
       httpOnly: true ,
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      maxAge: 24 * 60 * 60 * 1000 * 7, // 7 days
       secure: true, 
       sameSite: "None"
     });

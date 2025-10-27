@@ -17,6 +17,7 @@ import UserCard from "./components/UserCard";
 import TokenHistory from "./components/TokenHistory";
 import CustomerSupport from "./components/CustomerSupport";
 import PersonalGame from "./components/PersonalGame";
+import Wallet from "./pages/Wallet";
 
 function App() {
 
@@ -58,6 +59,7 @@ function App() {
               <Route path="/personalGame" element={<PersonalGame />} />
               <Route path="/userProfile" element={<UserCard />} />
               <Route path="/game/:name" element={<PlaceBetForm />} />
+              <Route path="/walletHistory" element={<Wallet />} />
             </Route>
 
             {/* 404 Fallback */}

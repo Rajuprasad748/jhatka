@@ -5,6 +5,7 @@ import { authMiddleware } from '../middleware/authMiddleware.js';
 import {restrictBetting} from '../middleware/restrictBetting.js';
 import { placeBet , getBetHistory} from '../controllers/betController.js';
 import { getContactInfo } from '../controllers/contactController.js';
+import { getWalletHistory } from '../controllers/walletController.js';
 
 const router = express.Router();
 
@@ -17,6 +18,7 @@ router.post('/logout', logoutUser);
 
 router.get("/games", getAllGames);
 router.get("/tokenHistory", authMiddleware, getTokenHistory);
+router.get("/walletHistory", authMiddleware, getWalletHistory);
 
 router.get("/contactInfo", getContactInfo);
 

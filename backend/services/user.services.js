@@ -35,6 +35,6 @@ export const findAllUsers = async (req, res) => {
 
 export const GenerateToken = (user) => {
   return jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "1d",
+    expiresIn: "7d",
   });
 };

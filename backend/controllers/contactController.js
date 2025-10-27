@@ -17,7 +17,7 @@ export const updateContactField = async (req, res) => {
   try {
     const { field, value } = req.body;
 
-    const allowedFields = ["contactNumber", "email", "telegram", "instagram"];
+    const allowedFields = ["contactNumber", "email", "telegram", "instagram" , "marquee"];
     if (!allowedFields.includes(field)) {
       return res.status(400).json({ message: "Invalid field" });
     }

@@ -15,10 +15,10 @@ export const registerUser = async (req, res) => {
     const userExists = await User.findOne({ mobile });
     if (userExists) {
       return res
-      .status(400)
-      .json({ message: "User already exists with this mobile number" });
+        .status(400)
+        .json({ message: "User already exists with this mobile number" });
     }
-    
+
     // 3. Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -33,6 +33,14 @@ export const registerUser = async (req, res) => {
 
     // 5. Generate token
     const token = GenerateToken(user);
+
+    const firstToken = new Token({
+      userId: user._id,
+      amount: 49,
+      remark: "Welcome bonus",
+      type: "add",
+    });
+    await firstToken.save();
 
     // 6. Send response
     res.status(201).json({
@@ -49,7 +57,6 @@ export const registerUser = async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 };
-
 
 export const loginUser = async (req, res) => {
   try {
@@ -77,7 +84,7 @@ export const loginUser = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "None",
-      maxAge: 60 * 60 * 1000,
+      maxAge: 60 * 60 * 1000 * 24 * 7, // 7 days
     });
 
     res.status(200).json({
@@ -97,8 +104,8 @@ export const loginUser = async (req, res) => {
 export const logoutUser = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-      secure: true,
-      sameSite: "None",
+    secure: true,
+    sameSite: "None",
   });
   res.json({ message: "Logged out successfully" });
 };
@@ -107,9 +114,7 @@ export const verifyUser = (req, res) => {
   res.json({ isLoggedIn: true, user: req.user });
 };
 
-
 export const getTokenHistory = async (req, res) => {
-
   try {
     const userId = req.user._id;
     const history = await Token.find({ userId }).sort({ createdAt: -1 });

@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import Token from "../models/token.model.js";
 import ContactInfo from "../models/contactInfo.model.js";
+import Bet from "../models/placeBet.js";
 
 export const getAllTokens = async (req, res) => {
   try {
@@ -92,7 +93,7 @@ export const removeTokens = async (req, res) => {
     await token.save();
 
     // Deduct tokens
-    user.walletBalance -= Number(tokens);
+    (user.walletBalance -= Number(tokens));
     await user.save();
 
     await ContactInfo.findOneAndUpdate(
@@ -151,3 +152,18 @@ export const getAccountInfo = async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 };
+
+export const getWalletHistory = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Example DB structure: each record has { userId, type, amount, message, date }
+    const tokenHistory = await Token.find({ userId }).sort({ date: -1 });
+    const winningHistory = await Bet.find({ user: userId }).sort({ date: -1 });
+
+    res.json({ success: true, tokenHistory, winningHistory });
+  } catch (err) {
+    console.error("Error fetching wallet history:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+}

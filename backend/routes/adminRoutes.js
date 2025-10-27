@@ -15,7 +15,7 @@ router.get('/allBets', getAllBets);
 
 
 router.get('/contactInfo', getContactInfo);
-router.get('/updateContactInfo', updateContactField);
+router.put('/updateContactInfo', updateContactField);
 
 router.get('/account', adminAuthMiddleware , getAccountInfo);
 router.get('/collections', adminAuthMiddleware , getCollections);

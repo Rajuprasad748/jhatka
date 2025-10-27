@@ -82,7 +82,7 @@ const BetHistory = () => {
                 {/* Right Section */}
                 <div className="mt-3 sm:mt-0 text-right text-md sm:text-base space-y-1">
                   <p className="font-semibold text-blue-600">Bet: {bet.points}</p>
-                  {bet.winningAmount > 0 && (
+                  {bet.winningAmount > 0 && bet.status === "won" && (
                     <p className="font-semibold text-green-600">
                       Won: {bet.winningAmount}
                     </p>
