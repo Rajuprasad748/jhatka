@@ -4,13 +4,14 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const AddToken = () => {
-  const [mobile, setMobile] = useState(""); 
+  const [mobile, setMobile] = useState("");
   const [user, setUser] = useState(null);
   const [tokens, setTokens] = useState("");
   const [remark, setRemark] = useState("Tokens added successfully!");
   const [loading, setLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState(false);
   const [animatedBalance, setAnimatedBalance] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const prevBalanceRef = useRef(0);
 
   // Animate wallet balance
@@ -39,15 +40,22 @@ const AddToken = () => {
       toast.error("Please enter a mobile number");
       return;
     }
-    setLoading(true);
 
+    //Basic mobile validation (Indian numbers)
+    // if (!/^[6-9]\d{9}$/.test(mobile)) {
+    //   toast.error("Enter a valid 10-digit mobile number");
+    //   return;
+    // }
+
+    setLoading(true);
     const token = localStorage.getItem("token");
+
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/admin/findUser/${mobile}` , {
-          withCredentials: true,headers: {
-      Authorization: `Bearer ${token}`, // 🔥 sending manually
-    },
+        `${import.meta.env.VITE_API_BASE_URL}/admin/findUser/${mobile}`,
+        {
+          withCredentials: true,
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
       setUser(res.data);
@@ -64,20 +72,34 @@ const AddToken = () => {
 
   // Add tokens with remark
   const handleAddTokens = async () => {
+    if (isSubmitting) return; // Prevent double clicks
     if (!tokens || isNaN(tokens)) {
       toast.error("Please enter a valid number of tokens");
+      return;
+    }
+    if (Number(tokens) <= 0) {
+      toast.error("Tokens must be greater than zero");
       return;
     }
     if (!user) {
       toast.error("Please fetch a user first.");
       return;
     }
+
     setLoading(true);
+    setIsSubmitting(true);
+    const token = localStorage.getItem("token");
+
     try {
       const res = await axios.put(
         `${import.meta.env.VITE_API_BASE_URL}/admin/addTokens/${mobile}`,
-        { tokens: Number(tokens), remark }
+        { tokens: Number(tokens), remark },
+        {
+          withCredentials: true,
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
+
       setUser(res.data);
       setTokens("");
       setRemark("Tokens added successfully!");
@@ -89,6 +111,7 @@ const AddToken = () => {
       );
     } finally {
       setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -105,6 +128,7 @@ const AddToken = () => {
         onChange={(e) => setMobile(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && fetchUser()}
         className="w-full px-4 py-2 mb-2 border rounded-lg"
+        disabled={loading}
       />
       <button
         onClick={fetchUser}
@@ -136,13 +160,16 @@ const AddToken = () => {
             onChange={(e) => setRemark(e.target.value)}
             rows={2}
             className="w-full px-4 py-2 mb-2 border rounded-lg resize-none"
+            disabled={loading}
           />
           <input
             type="number"
             placeholder="Enter tokens to add"
             value={tokens}
             onChange={(e) => setTokens(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && setConfirmDialog(true)}
             className="w-full px-4 py-2 mb-2 border rounded-lg"
+            disabled={loading}
           />
           <button
             onClick={() => setConfirmDialog(true)}
@@ -160,7 +187,8 @@ const AddToken = () => {
           <div className="bg-white p-8 px-12 rounded-lg shadow-lg w-100">
             <h3 className="text-xl font-semibold mb-4 text-center">Are you sure?</h3>
             <p className="text-lg text-gray-600 mb-6 text-center">
-              Do you really want to add <strong>{tokens}</strong> tokens to {user?.name}'s wallet?
+              Do you really want to add{" "}
+              <strong>{tokens}</strong> tokens to {user?.name}'s wallet?
             </p>
             <p className="text-md text-gray-500 mb-6 text-center">
               <strong>Remark:</strong> {remark}
@@ -168,12 +196,16 @@ const AddToken = () => {
             <div className="flex justify-around">
               <button
                 onClick={handleAddTokens}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                disabled={isSubmitting}
+                className={`px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 ${
+                  isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
-                Yes
+                {isSubmitting ? "Processing..." : "Yes"}
               </button>
               <button
                 onClick={() => setConfirmDialog(false)}
+                disabled={isSubmitting}
                 className="px-6 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
               >
                 No
