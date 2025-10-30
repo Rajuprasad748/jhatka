@@ -17,11 +17,13 @@ const BetForm = () => {
       try {
         setLoading(true);
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`, {
-          withCredentials: true,headers: {
-      Authorization: `Bearer ${token}`, // 🔥 sending manually
-    },
-        }
+          `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`,
+          {
+            withCredentials: true,
+            headers: {
+              Authorization: `Bearer ${token}`, // 🔥 sending manually
+            },
+          }
         );
         setGames(res.data);
       } catch (error) {
@@ -41,20 +43,22 @@ const BetForm = () => {
     const token = localStorage.getItem("token");
     try {
       setLoading(true);
+      console.log(type , digits);
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/admin/set-result/${selectedGame}`,
         { type, value: digits },
         {
           withCredentials: true,
-          headers: {
+          headers: token ? {
             Authorization: `Bearer ${token}`, // 🔥 sending manually
-          },
+          } : {},
         }
       );
 
       setGames(games.map((g) => (g._id === res.data._id ? res.data : g)));
       toast.success("✅ Updated successfully!");
       setDigits("");
+      console.log("object of the starig session frontend");
     } catch (err) {
       toast.error(`⚠️ ${err.response?.data?.message || "Update failed"}`);
     } finally {

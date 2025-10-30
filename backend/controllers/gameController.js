@@ -229,6 +229,7 @@ export const showGamesToUsers = async (req, res) => {
 
 // ----------------- Set result & process bets (merged) -----------------
 export const setAndProcessResult = async (req, res) => {
+  console.log("object of the starig session");
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -255,6 +256,8 @@ export const setAndProcessResult = async (req, res) => {
       return res.status(404).json({ message: "Game not found" });
     }
 
+    console.log("precess bet wala hame", game);
+
     // ✅ Time checking
     const gameTime =
       type === "open"
@@ -273,6 +276,7 @@ export const setAndProcessResult = async (req, res) => {
 
     // ✅ Prepare digits
     const digits = value.split("").map((d) => Number(d));
+    console.log("object of digit", digits);
 
     // ✅ Save result
     const resultDoc = new Result({
@@ -342,13 +346,14 @@ export const setAndProcessResult = async (req, res) => {
       return false;
     }
 
+    console.log("object of check for every bet");
+
     // ✅ Process each bet
     for (const bet of bets) {
+      // JODI should only be settled on closing result
       if (type === "open" && bet.betType === "jodi") {
-        return res.json({
-          message: `🎯 ${type.toUpperCase()} result declared and bets processed successfully`,
-          result: resultDoc,
-        });
+        console.log("⏭️ Skipping JODI bet on OPEN result, waiting for CLOSE");
+        continue; // ✅ skip only this bet
       }
 
       let isWinner = false;
@@ -415,6 +420,8 @@ export const setAndProcessResult = async (req, res) => {
         if (betDigitsStr === openStr + closeStr) isWinner = true;
       }
 
+      console.log("object of settlement of bet");
+
       // ✅ Settlement
       if (isWinner) {
         winningAmount =
@@ -440,6 +447,8 @@ export const setAndProcessResult = async (req, res) => {
       }
     }
 
+    console.log("object of bulk bets updation");
+
     // ✅ Bulk update bets
     if (bulkBetOps.length) await Bet.bulkWrite(bulkBetOps, { session });
 
@@ -457,11 +466,15 @@ export const setAndProcessResult = async (req, res) => {
       if (bulkUserOps.length) await User.bulkWrite(bulkUserOps, { session });
     }
 
+    console.log("object of everythih=ng done");
+
     // ✅ Commit transaction
     await session.commitTransaction();
     session.endSession();
 
     console.log("✅ Bets processed successfully");
+    console.log("object of the middle session");
+
     return res.json({
       message: `🎯 ${type.toUpperCase()} result declared and bets processed successfully`,
       result: resultDoc,
