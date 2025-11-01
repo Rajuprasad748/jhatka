@@ -38,23 +38,44 @@ const Wallet = () => {
 
         // Normalize winning history
         const normalizedWinningHistory = winningHistory
-          .filter((item) => item.status === "won")
-          .map((item) => ({
-            type: "win",
-            amount: item.winningAmount,
-            message: `Won ₹${item.winningAmount} in ${item.gameName.toUpperCase()} (${item.marketType})`,
-            date: item.createdAt,
-          }));
+          .filter((item) => item.status !== "pending") // ✅ remove pending
+          .map((item) => {
+            if (item.status === "won") {
+              return {
+                type: "win",
+                amount: item.winningAmount, // positive
+                message: `Won ₹${
+                  item.winningAmount
+                } in ${item.gameName.toUpperCase()} (${item.marketType})`,
+                date: item.createdAt,
+              };
+            }
+
+            if (item.status === "lost") {
+              return {
+                type: "loss",
+                amount: item.points, // ❗ make negative to deduct wallet
+                message: `Lost ${
+                  item.points
+                } in ${item.gameName.toUpperCase()} (${item.marketType})`,
+                date: item.createdAt,
+              };
+            }
+          });
 
         // Combine & sort ascending for running total
-        const combined = [...normalizedTokenHistory, ...normalizedWinningHistory];
+        const combined = [
+          ...normalizedTokenHistory,
+          ...normalizedWinningHistory,
+        ];
         combined.sort((a, b) => new Date(a.date) - new Date(b.date));
 
         // Calculate running balance
         let balance = 0;
         const withBalance = combined.map((item) => {
-          if (item.type === "add" || item.type === "win") balance += item.amount;
-          else if (item.type === "remove") balance -= item.amount;
+          if (item.type === "add" || item.type === "win")
+            balance += item.amount;
+          else if (item.type === "remove" || item.type === "loss") balance -= item.amount;
           return { ...item, balance };
         });
 
@@ -107,10 +128,14 @@ const Wallet = () => {
                     {item.type === "add"
                       ? "Token Added"
                       : item.type === "win"
-                      ? "Winning Amount"
+                      ? "Winning Amount" :
+                      item.type === "loss" 
+                      ? "Game Lost"
                       : "Tokens Removed"}
                   </p>
-                  <p className="text-gray-700 text-xs sm:text-sm">{item.message}</p>
+                  <p className="text-gray-700 text-xs sm:text-sm">
+                    {item.message}
+                  </p>
                   <p className="text-gray-700 text-xs">
                     {new Date(item.date).toLocaleString()}
                   </p>
@@ -119,15 +144,15 @@ const Wallet = () => {
                 <div className="flex flex-col sm:items-end space-y-1 sm:space-y-0 sm:space-x-0">
                   <span
                     className={`font-bold text-lg ${
-                      item.type === "remove" ? "text-red-500" : "text-green-600"
+                      item.type === "remove" || item.type === "loss" ? "text-red-500" : "text-green-600"
                     }`}
                   >
-                    {item.type === "remove"
-                      ? `-₹${item.amount}`
-                      : `+₹${item.amount}`}
+                    {item.type === "remove" || item.type === "loss"
+                      ? `-${item.amount}`
+                      : `+${item.amount}`}
                   </span>
                   <span className="text-gray-800 font-semibold text-sm sm:text-base">
-                    Balance: ₹{item.balance}
+                    Balance: {item.balance}
                   </span>
                 </div>
               </div>
