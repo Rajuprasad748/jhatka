@@ -65,6 +65,7 @@ export const placeBet = async (req, res) => {
   }
 };
 
+
 export const getBetHistory = async (req, res) => {
   try {
     const userId = req.user.id || req.query.userId; // Support both user and admin routes
@@ -114,6 +115,16 @@ export const getAllBets = async (req, res) => {
 
 export const recallResults = async (req , res) => {
   const { date, gameId, marketType } = req.body;
+
+  const admin = req.admin;
+
+    const allowedRoles = ["superAdmin"];
+    if (!allowedRoles.includes(admin.role)) {
+      return res
+        .status(403)
+        .json({ message: "You do not have permission to add tokens" });
+    }
+
   const session = await mongoose.startSession();
   session.startTransaction();
 

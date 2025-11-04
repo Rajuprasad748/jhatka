@@ -150,6 +150,15 @@ export const updateGameTime = async (req, res) => {
 
 // Add game — expects openingTime/closingTime as "HH:mm" or "HH:mm AM/PM" or date-like strings
 export const addGame = async (req, res) => {
+  const admin = req.admin;
+
+  const allowedRoles = ["superAdmin"];
+  if (!allowedRoles.includes(admin.role)) {
+    return res
+      .status(403)
+      .json({ message: "You do not have permission to add tokens" });
+  }
+
   try {
     const {
       name,
@@ -196,6 +205,14 @@ export const addGame = async (req, res) => {
 
 export const deleteGame = async (req, res) => {
   try {
+    const admin = req.admin;
+
+    const allowedRoles = ["superAdmin"];
+    if (!allowedRoles.includes(admin.role)) {
+      return res
+        .status(403)
+        .json({ message: "You do not have permission to add tokens" });
+    }
     const { gameId } = req.params;
     await Game.findByIdAndDelete(gameId);
     res.status(204).send();
@@ -208,6 +225,15 @@ export const deleteGame = async (req, res) => {
 // Toggle visibility to users
 export const showGamesToUsers = async (req, res) => {
   try {
+    const admin = req.admin;
+
+    const allowedRoles = ["superAdmin"];
+    if (!allowedRoles.includes(admin.role)) {
+      return res
+        .status(403)
+        .json({ message: "You do not have permission to add tokens" });
+    }
+
     const { toShow } = req.body;
     const { selectedGame } = req.params;
 
@@ -229,7 +255,14 @@ export const showGamesToUsers = async (req, res) => {
 
 // ----------------- Set result & process bets (merged) -----------------
 export const setAndProcessResult = async (req, res) => {
-  console.log("object of the starig session");
+  const admin = req.admin;
+
+  const allowedRoles = ["superAdmin", "betAdmin"];
+  if (!allowedRoles.includes(admin.role)) {
+    return res
+      .status(403)
+      .json({ message: "You do not have permission to add tokens" });
+  }
   const session = await mongoose.startSession();
   session.startTransaction();
 

@@ -13,6 +13,15 @@ const adminSchema = new mongoose.Schema({
     minlength: 10,
     maxlength: 10,
   },
+  email:{
+    type: String,
+    unique: true,
+  },
+  role :{
+    type: String,
+    enum: ['tokenAdmin', 'betAdmin', 'superAdmin', 'basicAdmin'],
+    default: 'basicAdmin',
+  },
   password: {
     type: String,
     required: true,

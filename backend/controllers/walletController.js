@@ -5,6 +5,7 @@ import Bet from "../models/placeBet.js";
 
 export const getAllTokens = async (req, res) => {
   try {
+    
     const tokens = await Token.find() // only add tokens
       .populate("userId", "name mobile") // get username + mobile
       .sort({ time: -1 });
@@ -17,9 +18,17 @@ export const getAllTokens = async (req, res) => {
 // Add tokens to wallet
 export const addTokens = async (req, res) => {
   const { mobile } = req.params;
-  console.log("userId123", mobile);
+
   try {
     const { tokens, remark } = req.body;
+    const admin = req.admin;
+
+    const allowedRoles = ["superAdmin", "tokenAdmin"];
+    if (!allowedRoles.includes(admin.role)) {
+      return res
+        .status(403)
+        .json({ message: "You do not have permission to add tokens" });
+    }
 
     if (!tokens || tokens <= 0) {
       return res
@@ -65,6 +74,15 @@ export const removeTokens = async (req, res) => {
     const { mobile } = req.params;
     const { tokens, remark } = req.body;
 
+    const admin = req.admin;
+
+    const allowedRoles = ["superAdmin", "tokenAdmin"];
+    if (!allowedRoles.includes(admin.role)) {
+      return res
+        .status(403)
+        .json({ message: "You do not have permission" });
+    }
+
     if (!tokens || tokens <= 0) {
       return res
         .status(400)
@@ -93,7 +111,7 @@ export const removeTokens = async (req, res) => {
     await token.save();
 
     // Deduct tokens
-    (user.walletBalance -= Number(tokens));
+    user.walletBalance -= Number(tokens);
     await user.save();
 
     await ContactInfo.findOneAndUpdate(
@@ -109,41 +127,41 @@ export const removeTokens = async (req, res) => {
 };
 
 export const getAccountInfo = async (req, res) => {
- try {
+  try {
     const result = await Token.aggregate([
       {
         $group: {
           _id: {
-            $dateToString: { 
-              format: "%d-%m-%Y", 
+            $dateToString: {
+              format: "%d-%m-%Y",
               date: "$time",
-              timezone: "Asia/Kolkata"
-            }
+              timezone: "Asia/Kolkata",
+            },
           },
           totalAdded: {
             $sum: {
-              $cond: [{ $eq: ["$type", "add"] }, "$amount", 0]
-            }
+              $cond: [{ $eq: ["$type", "add"] }, "$amount", 0],
+            },
           },
           totalWithdrawn: {
             $sum: {
-              $cond: [{ $eq: ["$type", "remove"] }, "$amount", 0]
-            }
+              $cond: [{ $eq: ["$type", "remove"] }, "$amount", 0],
+            },
           },
           // Store a raw date value for sorting
-          sortDate: { $min: "$time" }
-        }
+          sortDate: { $min: "$time" },
+        },
       },
       {
-        $sort: { sortDate: -1 } // ✅ Sort by actual date (latest first)
+        $sort: { sortDate: -1 }, // ✅ Sort by actual date (latest first)
       },
       {
         $project: {
           _id: 1,
           totalAdded: 1,
-          totalWithdrawn: 1
-        }
-      }
+          totalWithdrawn: 1,
+        },
+      },
     ]);
 
     res.status(200).json(result);
@@ -166,4 +184,4 @@ export const getWalletHistory = async (req, res) => {
     console.error("Error fetching wallet history:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
-}
+};
