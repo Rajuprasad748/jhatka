@@ -289,7 +289,6 @@ export const setAndProcessResult = async (req, res) => {
       return res.status(404).json({ message: "Game not found" });
     }
 
-    console.log("precess bet wala hame", game);
 
     // ✅ Time checking
     const gameTime =
@@ -309,7 +308,6 @@ export const setAndProcessResult = async (req, res) => {
 
     // ✅ Prepare digits
     const digits = value.split("").map((d) => Number(d));
-    console.log("object of digit", digits);
 
     // ✅ Save result
     const resultDoc = new Result({
@@ -373,13 +371,10 @@ export const setAndProcessResult = async (req, res) => {
       for (let i = 0; i < 3; i++) {
         if (userInput[i] === answer[i]) matchedPositions++;
       }
-      if (panaType === "singlePana") return matchedPositions >= 1;
-      if (panaType === "doublePana") return matchedPositions >= 2;
-      if (panaType === "triplePana") return matchedPositions === 3;
+      if (panaType === "singlePana" || panaType === "doublePana" || panaType === "triplePana") return matchedPositions == 1;
+  
       return false;
     }
-
-    console.log("object of check for every bet");
 
     // ✅ Process each bet
     for (const bet of bets) {
@@ -480,7 +475,6 @@ export const setAndProcessResult = async (req, res) => {
       }
     }
 
-    console.log("object of bulk bets updation");
 
     // ✅ Bulk update bets
     if (bulkBetOps.length) await Bet.bulkWrite(bulkBetOps, { session });

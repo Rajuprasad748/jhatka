@@ -4,63 +4,70 @@ import Game from "../models/addGame.js";
 import mongoose from "mongoose";
 
 // POST /api/bets
-export const placeBet = async (req, res) => {
+export const placeBets = async (req, res) => {
   try {
-    const { betType, date, marketType, digits, points, gameId } = req.body;
+    const { bets } = req.body;
 
-    // Basic validation
-    if (!betType || !date || !marketType || !digits || !points || !gameId) {
-      return res.status(400).json({ message: "All fields are required" });
+    if (!bets || !Array.isArray(bets) || bets.length === 0) {
+      return res.status(400).json({ message: "At least one bet is required" });
     }
 
-    // user is injected from verifyToken middleware
-    const userId = req.user._id;
-
-    // ✅ Find user
+    const userId = req.user.id;
     const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: "Userrrr not found" });
+
+    // Validate each bet
+    let totalPoints = 0;
+    for (let i = 0; i < bets.length; i++) {
+      const { betType, date, marketType, digits, points, gameId } = bets[i];
+
+      if (!betType || !date || !marketType || !digits || !points || !gameId) {
+        return res.status(400).json({ message: `All fields are required for bet #${i + 1}` });
+      }
+
+      const pointsNumber = Number(points);
+      if (isNaN(pointsNumber) || pointsNumber < 50) {
+        return res.status(400).json({ message: `Invalid points for bet #${i + 1}` });
+      }
+
+      totalPoints += pointsNumber;
     }
 
-    const game = await Game.findById(gameId);
-    if (!game) {
-      return res.status(404).json({ message: "Game not found" });
-    }
-
-    // ✅ Check wallet balance
-    const pointsNumber = Number(points); // ensure number
-    if (user.walletBalance < pointsNumber) {
+    // Check wallet balance
+    if (user.walletBalance < totalPoints) {
       return res.status(400).json({ message: "Insufficient wallet balance" });
     }
 
-    user.walletBalance -= pointsNumber;
+    // Deduct total points
+    user.walletBalance -= totalPoints;
     await user.save();
 
-    /*
-    console.log("Bet placed:123", userId, gameId, game.name, betType, date, marketType, digits, points);
-    */
+    // Save all bets
+    const betsToSave = await Promise.all(
+      bets.map(async (b) => {
+        const game = await Game.findById(b.gameId);
+        if (!game) throw new Error(`Game not found for bet: ${b.gameId}`);
 
-    // ✅ Save bet
-    const newBet = new Bet({
-      user: userId,
-      gameId,
-      gameName: game.name,
-      betType,
-      date,
-      marketType,
-      digits,
-      points,
-    });
-
-    await newBet.save();
+        return new Bet({
+          user: userId,
+          gameId: b.gameId,
+          gameName: game.name,
+          betType: b.betType,
+          date: b.date,
+          marketType: b.marketType,
+          digits: b.digits,
+          points: Number(b.points),
+        }).save();
+      })
+    );
 
     res.status(201).json({
-      message: "Bet placed successfully",
-      bet: newBet,
-      walletBalance: user.walletBalance, // ✅ return updated wallet balance
+      message: "All bets placed successfully",
+      bets: betsToSave,
+      walletBalance: user.walletBalance,
     });
   } catch (error) {
-    console.error("Error placing bet:", error);
+    console.error("Error placing multiple bets:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

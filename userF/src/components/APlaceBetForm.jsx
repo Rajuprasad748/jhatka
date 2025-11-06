@@ -1,352 +1,269 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/useAuth.js";
 import { betOptions, betTypeMap, getDisabledState } from "../utils/betUtils.js";
 
 const APlaceBetForm = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-
-  const { game } = location.state || {};
+  const location = useLocation();
   const { user, updateUser } = useAuth();
+  const { game } = location.state || {};
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const [selectedOption, setSelectedOption] = useState(betOptions[0].name);
-
-  const [formData, setFormData] = useState({
+  const createEmptyBet = () => ({
     date: new Date().toISOString().split("T")[0],
     session: "open",
+    option: betOptions[0].name,
     digits: {},
     points: "",
+    disabled: { openDisabled: false, closeDisabled: false }, // per bet disabled
   });
 
-  const [disabled, setDisabled] = useState({
-    openDisabled: false,
-    closeDisabled: false,
-    submitDisabled: false,
-  });
-
-  const currentOption = betOptions.find((o) => o.name === selectedOption);
-
-  // ------------------ Required Length ------------------
-  const getRequiredLength = (optionName, label, session) => {
-    if (
-      optionName === "Single Pana" ||
-      optionName === "Double Pana" ||
-      optionName === "Triple Pana"
-    ) {
-      return 3;
-    }
-
-    // 🔹 Jodi requires 2 digits
-    if (optionName === "Jodi") {
-      return 2;
-    }
-
-    if (optionName === "Half Sangam") {
-      if (label === "Open Digit") return session === "open" ? 3 : 1;
-      if (label === "Close Pana") return session === "open" ? 1 : 3;
-    }
-
-    if (optionName === "Full Sangam") {
-      return 3;
-    }
-
-    return 1;
-  };
-
-  // ------------------ Reset Digits on Option/Session Change ------------------
-  useEffect(() => {
-    if (!currentOption) return;
-
-    const newDigits = {};
-    currentOption.parts.forEach((part, idx) => {
-      newDigits[`part-${idx}`] = "";
-    });
-
-    setFormData((prev) => ({
-      ...prev,
-      digits: newDigits,
-    }));
-  }, [selectedOption, formData.session, currentOption]);
+  const [bets, setBets] = useState([createEmptyBet()]);
+  const [loading, setLoading] = useState(false);
 
   // ------------------ Check Disabled ------------------
-  const checkDisabled = useCallback(() => {
+ const checkDisabled = useCallback(() => {
     if (!game) return;
-    const {
-      openDisabled,
-      closeDisabled,
-      submitDisabled,
-      adjustedOption,
-      session,
-    } = getDisabledState(game, selectedOption, formData.session);
 
-    setDisabled({ openDisabled, closeDisabled, submitDisabled });
+    setBets(prevBets =>
+      prevBets.map(bet => {
+        const { openDisabled, closeDisabled, submitDisabled, adjustedOption, session } =
+          getDisabledState(game, bet.option, bet.session);
 
-    if (betOptions.some((o) => o.name === adjustedOption)) {
-      setSelectedOption(adjustedOption);
-    }
+        // if the option was auto-adjusted, clear digits for that bet
+        const newOption = adjustedOption || bet.option;
+      const newDigits = adjustedOption && adjustedOption !== bet.option ? {} : bet.digits;
 
-    setFormData((prev) => ({ ...prev, session }));
-  }, [game, selectedOption, formData.session]);
-
+        return {
+          ...bet,
+          session,
+          //option: adjustedOption || bet.option,
+          option: newOption,          
+          digits: newDigits,
+          disabled: { openDisabled, closeDisabled, submitDisabled },
+        };
+      })
+    );
+  }, [game]);
+// ...e
   useEffect(() => {
     checkDisabled();
     const interval = setInterval(checkDisabled, 30000);
     return () => clearInterval(interval);
   }, [checkDisabled]);
 
-  // ------------------ Input Change ------------------
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name.startsWith("part-")) {
-      const partIndex = parseInt(name.split("-")[1]);
-      const label = currentOption.parts[partIndex].label;
-      const len = getRequiredLength(selectedOption, label, formData.session);
+  // ------------------ Handle form change ------------------
+  const handleChange = (index, field, value) => {
+    const updated = [...bets];
+    updated[index][field] = value;
 
-      const numericValue = value.replace(/\D/g, "").slice(0, len);
-      setFormData((prev) => ({
-        ...prev,
-        digits: { ...prev.digits, [name]: numericValue },
-      }));
-    } else if (name === "points") {
-      const numericValue = value.replace(/\D/g, "");
-      setFormData((prev) => ({ ...prev, points: numericValue }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+    if (field === "option") {
+      updated[index].digits = {};
     }
+
+    setBets(updated);
   };
 
-  // ------------------ Submit ------------------
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (disabled.submitDisabled) return;
-
-    const pointsValue = parseInt(formData.points, 10);
-    if (!pointsValue || pointsValue < 50 || pointsValue > 10000) {
-      setError("Points must be between 50 and 10,000");
-      return;
-    }
-    setError("");
-
-    for (let i = 0; i < currentOption.parts.length; i++) {
-      const partName = `part-${i}`;
-      const label = currentOption.parts[i].label;
-
-      const requiredLen = getRequiredLength(
-        selectedOption,
-        label,
-        formData.session
-      );
-
-      if (
-        !formData.digits[partName] ||
-        formData.digits[partName].length !== requiredLen
-      ) {
-        setError(`Enter exactly ${requiredLen} digits for ${label}`);
-        return;
+  const handleDigitChange = (index, partIndex, label, session, optionName, val) => {
+    const getRequiredLength = (option, label, session) => {
+      if (["Single Pana", "Double Pana", "Triple Pana"].includes(option)) return 3;
+      if (option === "Jodi") return 2;
+      if (option === "Half Sangam") {
+        if (label === "Open Digit") return session === "open" ? 3 : 1;
+        if (label === "Close Pana") return session === "open" ? 1 : 3;
       }
-    }
-
-    if (betTypeMap[selectedOption] === "triplePana") {
-      const val = Object.values(formData.digits).join("-");
-      if (val[0] !== val[1] || val[1] !== val[2] || val[0] !== val[2]) {
-        setError("All three digits must be same for Triple Pana");
-        return;
-      }
-    }
-
-    if (betTypeMap[selectedOption] === "doublePana") {
-      const val = Object.values(formData.digits).join("-"); // ensure string comparison
-
-      // ✅ Check for exactly two *consecutive* same digits
-      if (
-        !(
-          (val[0] === val[1] && val[1] !== val[2]) ||
-          (val[1] === val[2] && val[0] !== val[1])
-        )
-      ) {
-        setError("Two consecutive digits must be the same for Double Pana");
-        return;
-      }
-    }
-
-    const payload = {
-      user: user?._id,
-      gameId: game._id,
-      betType: betTypeMap[selectedOption],
-      date: new Date(formData.date),
-      marketType: formData.session, // 🧩 Modified
-      digits: Object.values(formData.digits).join("-"),
-      points: pointsValue,
+      if (option === "Full Sangam") return 3;
+      return 1;
     };
 
+    const len = getRequiredLength(optionName, label, session);
+    const numeric = val.replace(/\D/g, "").slice(0, len);
+
+    const updated = [...bets];
+    updated[index].digits[`part-${partIndex}`] = numeric;
+    setBets(updated);
+  };
+
+  const addBet = () => setBets(prev => [...prev, createEmptyBet()]);
+  const removeBet = i => {
+    if (bets.length === 1) return toast.error("At least one bet required");
+    setBets(prev => prev.filter((_, idx) => idx !== i));
+  };
+
+  // ------------------ Validate All Bets ------------------
+  const validateAll = () => {
+    for (let i = 0; i < bets.length; i++) {
+      const bet = bets[i];
+      const option = betOptions.find(o => o.name === bet.option);
+
+      // Points
+      const pointsValue = parseInt(bet.points, 10);
+      if (!pointsValue || pointsValue < 50 || pointsValue > 10000)
+        return `Bet #${i + 1}: Points must be 50-10000`;
+
+      // Digits
+      for (let p = 0; p < option.parts.length; p++) {
+        const partName = `part-${p}`;
+        const label = option.parts[p].label;
+        const len = (() => {
+          if (["Single Pana", "Double Pana", "Triple Pana"].includes(option.name)) return 3;
+          if (option.name === "Jodi") return 2;
+          if (option.name === "Half Sangam") {
+            if (label === "Open Digit") return bet.session === "open" ? 3 : 1;
+            if (label === "Close Pana") return bet.session === "open" ? 1 : 3;
+          }
+          if (option.name === "Full Sangam") return 3;
+          return 1;
+        })();
+
+        const val = bet.digits[partName];
+        if (!val || val.length !== len)
+          return `Bet #${i + 1}: Enter exactly ${len} digits for ${label}`;
+      }
+
+      // Triple Pana validation
+      if (betTypeMap[option.name] === "triplePana") {
+        const val = Object.values(bet.digits).join("-");
+        if (!(val[0] === val[1] && val[1] === val[2]))
+          return `Bet #${i + 1}: All three digits must be same for Triple Pana`;
+      }
+
+      // Double Pana validation
+      if (betTypeMap[option.name] === "doublePana") {
+        const val = Object.values(bet.digits).join("-");
+        if (
+          !(
+            (val[0] === val[1] && val[1] !== val[2]) ||
+            (val[1] === val[2] && val[0] !== val[1])
+          )
+        )
+          return `Bet #${i + 1}: Two consecutive digits must be same for Double Pana`;
+      }
+    }
+    return null;
+  };
+
+  // ------------------ Submit All Bets ------------------
+  const handleSubmit = async () => {
+    if (!user?._id) return navigate("/login");
+
+    const err = validateAll();
+    if (err) return toast.error(err);
+
+    const payload = bets.map(bet => ({
+      user: user._id,
+      gameId: game._id,
+      betType: betTypeMap[bet.option],
+      date: bet.date,
+      marketType: bet.session,
+      digits: Object.values(bet.digits).join("-"),
+      points: parseInt(bet.points, 10),
+    }));
+
+    console.log("payload" , payload);
 
     try {
       setLoading(true);
-
-      // 🔹 Added: Token from localStorage
       const token = localStorage.getItem("token");
+      console.log(token)
 
       const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/users/place-bet`,
-        payload,
-        {
-          withCredentials: true,
-          headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        }
+        `${import.meta.env.VITE_API_BASE_URL}/users/place-bets`,
+        { bets: payload },
+        {withCredentials: true},
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
       );
 
-      if (res.data.walletBalance !== undefined) {
-        updateUser((prev) => ({
-          ...prev,
-          walletBalance: res.data.walletBalance,
-        }));
-      }
-
-      alert("Bet submitted successfully!");
-      setFormData({
-        date: new Date().toISOString().split("T")[0],
-        session: "open",
-        digits: {},
-        points: "",
-      });
+      updateUser(prev => ({ ...prev, walletBalance: res.data.walletBalance }));
+      toast.success("All bets placed successfully");
       navigate("/");
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Failed to place bet. Try again."
-      );
+      toast.error(err.response?.data?.message || "Failed to place bets");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!game) {
-    return (
-      <div className="max-w-xs sm:max-w-md mx-auto p-6 bg-white shadow-xl rounded-3xl mt-10 sm:mt-20 text-center">
-        <p className="font-semibold text-red-600">No game selected</p>
-      </div>
-    );
-  }
+  if (!game) return <p className="text-center text-red-600">No game selected</p>;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 sm:px-6">
-      <div className="w-full max-w-md sm:max-w-lg bg-white shadow-xl rounded-3xl p-6 sm:p-8">
-        <h2 className="text-center font-bold text-2xl sm:text-3xl mb-6 text-gray-800">
-          {game.name} - Place Bet
-        </h2>
+    <div className="p-4 flex flex-col items-center">
+      <div className="max-w-xl w-full bg-gray-900 text-white rounded-2xl p-6">
+        <h2 className="text-xl font-bold text-center mb-4">{game.name} - Multi Bet</h2>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* 🧩 Hide Open/Close if Jodi */}
-          {selectedOption !== "Jodi" && (
-            <div className="flex gap-6 justify-center mb-4">
-              <label className="flex items-center gap-2 text-gray-700">
-                <input
-                  type="radio"
-                  name="session"
-                  value="open"
-                  checked={formData.session === "open"}
-                  disabled={disabled.openDisabled}
-                  onChange={handleChange}
-                  className="w-4 h-4 accent-blue-600"
-                />
-                Open
-              </label>
-              <label className="flex items-center gap-2 text-gray-700">
-                <input
-                  type="radio"
-                  name="session"
-                  value="close"
-                  checked={formData.session === "close"}
-                  disabled={disabled.closeDisabled}
-                  onChange={handleChange}
-                  className="w-4 h-4 accent-blue-600"
-                />
-                Close
-              </label>
-            </div>
-          )}
+        {bets.map((bet, index) => {
+          const option = betOptions.find(o => o.name === bet.option);
+          return (
+            <div key={index} className="bg-gray-800 p-4 rounded-xl mb-4 space-y-3 border border-gray-700">
+              <div className="flex justify-between items-center mb-2">
+                <p className="font-semibold">Bet #{index + 1}</p>
+                <button onClick={() => removeBet(index)} className="text-red-400 hover:text-red-600 text-xl">❌</button>
+              </div>
 
-          {/* Bet Type */}
-          <select
-            name="betOption"
-            value={selectedOption}
-            onChange={(e) => setSelectedOption(e.target.value)}
-            className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {betOptions.map((opt) => (
-              <option
-                key={opt.name}
-                value={opt.name}
-                disabled={
-                  disabled.openDisabled &&
-                  ["jodi", "half sangam", "full sangam"].some(
-                    (o) => o.toLowerCase() === opt.name.toLowerCase()
-                  )
-                }
-              >
-                {opt.name}
-              </option>
-            ))}
-          </select>
-
-          {/* Digits Input */}
-          {currentOption?.parts?.map((part, idx) => (
-            <input
-              key={idx}
-              type="text"
-              name={`part-${idx}`}
-              value={formData.digits[`part-${idx}`] || ""}
-              onChange={handleChange}
-              placeholder={part.label}
-              className="p-3 border rounded-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          ))}
-
-          {/* Points Input */}
-          <input
-            type="text"
-            name="points"
-            min="50"
-            max="10000"
-            value={formData.points}
-            onChange={handleChange}
-            placeholder="Points (50-10000)"
-            className="p-3 border rounded-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-
-          {error && <p className="text-red-600 text-center mt-1">{error}</p>}
-
-          {disabled.submitDisabled ? (
-            <p className="text-center text-red-600 font-semibold mt-4">
-              Closed for today
-            </p>
-          ) : (
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full py-3 rounded-2xl font-semibold transition ${
-                loading
-                  ? "bg-gray-400 cursor-not-allowed text-gray-200"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-              }`}
-            >
-              {loading ? (
-                <div className="flex justify-center items-center gap-2">
-                  <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
-                  Placing Bet...
+              {/* Session */}
+              {option.name !== "Jodi" && (
+                <div className="flex gap-4 mb-2">
+                  <label>
+                    <input type="radio" value="open" checked={bet.session === "open"}
+                      disabled={bet.disabled.openDisabled}
+                      onChange={e => handleChange(index, "session", e.target.value)}
+                      className="mr-1"
+                    />
+                    Open
+                  </label>
+                  <label>
+                    <input type="radio" value="close" checked={bet.session === "close"}
+                      disabled={bet.disabled.closeDisabled}
+                      onChange={e => handleChange(index, "session", e.target.value)}
+                      className="mr-1"
+                    />
+                    Close
+                  </label>
                 </div>
-              ) : (
-                "Submit"
               )}
-            </button>
-          )}
-        </form>
+
+              {/* Option */}
+              <select className="p-2 w-full text-black rounded"
+                value={bet.option}
+                onChange={e => handleChange(index, "option", e.target.value)}
+              >
+                {betOptions.map(o => <option key={o.name}>{o.name}</option>)}
+              </select>
+
+              {/* Digits */}
+              {option.parts.map((p, idx) => (
+                <input
+                  key={idx}
+                  className="p-2 w-full text-black rounded"
+                  placeholder={p.label}
+                  value={bet.digits[`part-${idx}`] || ""}
+                  onChange={(e) =>
+                    handleDigitChange(index, idx, p.label, bet.session, bet.option, e.target.value)
+                  }
+                />
+              ))}
+
+              {/* Points */}
+              <input
+                type="text"
+                className="p-2 w-full text-black rounded"
+                placeholder="Points"
+                value={bet.points}
+                onChange={e => handleChange(index, "points", e.target.value.replace(/\D/g, ""))}
+              />
+            </div>
+          );
+        })}
+
+        <div className="flex justify-between">
+          <button onClick={addBet} className="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">➕ Add More Bet</button>
+          <button onClick={handleSubmit} disabled={loading}
+            className={`bg-green-600 px-4 py-2 rounded hover:bg-green-700 ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+            {loading ? "Submitting..." : "Submit Bets"}
+          </button>
+        </div>
       </div>
     </div>
   );

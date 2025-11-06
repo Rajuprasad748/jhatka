@@ -5,7 +5,7 @@ export const getContactInfo = async (req, res) => {
   try {
     const info = await ContactInfo.find({});
     if (!info) return res.status(404).json({ message: "No contact info found" });
-    res.json(info);
+    res.status(200).json(info);
   } catch (err) {
     console.error("Error fetching contact info:", err);
     res.status(500).json({ message: "Server error" });
@@ -28,7 +28,7 @@ export const updateContactField = async (req, res) => {
     info[field] = value;
     await info.save();
 
-    res.json({ message: `${field} updated successfully`, updatedField: field, newValue: value });
+    res.status(200).json({ message: `${field} updated successfully`, updatedField: field, newValue: value });
   } catch (err) {
     console.error("Error updating contact info:", err);
     res.status(500).json({ message: "Server error" });

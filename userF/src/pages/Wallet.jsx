@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 
 // 🔹 Skeleton card for loading
@@ -37,51 +37,41 @@ const Wallet = () => {
         }));
 
         // Normalize winning history
-        const normalizedWinningHistory = winningHistory
-          .filter((item) => item.status !== "pending") // ✅ remove pending
-          .map((item) => {
-            if (item.status === "won") {
-              return {
-                type: "win",
-                amount: item.winningAmount, // positive
-                message: `Won ₹${
-                  item.winningAmount
-                } in ${item.gameName.toUpperCase()} (${item.marketType})`,
-                date: item.createdAt,
-              };
-            }
-
-            if (item.status === "lost") {
-              return {
-                type: "loss",
-                amount: item.points, // ❗ make negative to deduct wallet
-                message: `Lost ${
-                  item.points
-                } in ${item.gameName.toUpperCase()} (${item.marketType})`,
-                date: item.createdAt,
-              };
-            }
-          });
+        const normalizedWinningHistory = winningHistory.map((item) => {
+          if (item.status === "won") {
+            return {
+              type: "win",
+              amount: (item.winningAmount - item.points),
+              message: `Won ₹${item.winningAmount} in ${item.gameName.toUpperCase()} ${item.betType} (${item.marketType})`,
+              date: item.createdAt,
+            };
+          }
+          if (item.status === "lost") {
+            return {
+              type: "loss",
+              amount: item.points,
+              message: `Lost ${item.points} in ${item.gameName.toUpperCase()} ${item.betType} (${item.marketType})`,
+              date: item.createdAt,
+            };
+          }
+          return null;
+        }).filter(Boolean);
 
         // Combine & sort ascending for running total
-        const combined = [
-          ...normalizedTokenHistory,
-          ...normalizedWinningHistory,
-        ];
+        const combined = [...normalizedTokenHistory, ...normalizedWinningHistory];
         combined.sort((a, b) => new Date(a.date) - new Date(b.date));
 
         // Calculate running balance
         let balance = 0;
         const withBalance = combined.map((item) => {
-          if (item.type === "add" || item.type === "win")
-            balance += item.amount;
+          if (item.type === "add" || item.type === "win") balance += item.amount;
           else if (item.type === "remove" || item.type === "loss") balance -= item.amount;
+          // Pending does not change balance
           return { ...item, balance };
         });
 
         // Reverse for newest first
         withBalance.reverse();
-
         setWalletHistory(withBalance);
       } catch (err) {
         console.error("Error fetching wallet data:", err);
@@ -107,20 +97,20 @@ const Wallet = () => {
             ))}
           </div>
         ) : walletHistory.length === 0 ? (
-          <p className="text-center text-gray-500">
-            No wallet transactions found.
-          </p>
+          <p className="text-center text-gray-500">No wallet transactions found.</p>
         ) : (
           <div className="space-y-3">
             {walletHistory.map((item, index) => (
               <div
                 key={index}
-                className={`flex flex-row justify-between items-start sm:items-center p-4 rounded-xl shadow-md space-y-2 sm:space-y-0 ${
+                className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 rounded-xl shadow-md space-y-2 sm:space-y-0 ${
                   item.type === "add"
                     ? "bg-green-50 border-l-4 border-green-500"
                     : item.type === "win"
                     ? "bg-blue-50 border-l-4 border-blue-500"
-                    : "bg-red-50 border-l-4 border-red-500"
+                    : item.type === "loss"
+                    ? "bg-red-50 border-l-4 border-red-500"
+                    : "bg-yellow-50 border-l-4 border-yellow-500"
                 }`}
               >
                 <div className="flex-1">
@@ -128,17 +118,13 @@ const Wallet = () => {
                     {item.type === "add"
                       ? "Token Added"
                       : item.type === "win"
-                      ? "Winning Amount" :
-                      item.type === "loss" 
+                      ? "Winning Amount"
+                      : item.type === "loss"
                       ? "Game Lost"
-                      : "Tokens Removed"}
+                      : "Token Removed"}
                   </p>
-                  <p className="text-gray-700 text-xs sm:text-sm">
-                    {item.message}
-                  </p>
-                  <p className="text-gray-700 text-xs">
-                    {new Date(item.date).toLocaleString()}
-                  </p>
+                  <p className="text-gray-700 text-xs sm:text-sm">{item.message}</p>
+                  <p className="text-gray-700 text-xs">{new Date(item.date).toLocaleString()}</p>
                 </div>
 
                 <div className="flex flex-col sm:items-end space-y-1 sm:space-y-0 sm:space-x-0">

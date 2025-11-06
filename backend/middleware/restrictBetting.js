@@ -33,51 +33,70 @@ const isRestricted = (openingTime, closingTime) => {
   );
 };
 
+// Check a single game for restrictions
+const checkGameRestriction = (game) => {
+  const nowMinutes = toMinutes(new Date());
+  const openMinutes = toMinutes(new Date(game.openingTime));
+  const closeMinutes = toMinutes(new Date(game.closingTime));
+
+  // Betting closed after closeTime daily
+  let isClosed;
+  if (openMinutes < closeMinutes) {
+    // normal case
+    isClosed = nowMinutes >= closeMinutes;
+  } else {
+    // overnight case
+    isClosed = !inWindow(nowMinutes, openMinutes, closeMinutes);
+  }
+
+  if (isClosed) {
+    return "Betting closed for this game";
+  }
+
+  if (isRestricted(game.openingTime, game.closingTime)) {
+    return "Betting disabled 15 min before/after results.";
+  }
+
+  return null; // no restriction
+};
+
 // Middleware
 export const restrictBetting = async (req, res, next) => {
   try {
-    const { gameId } = req.body || req.params;
+    let gamesToCheck = [];
 
-    let game;
-    if (gameId) {
-      game = await Game.findById(gameId);
+    // If multiple bets, extract gameIds
+    if (Array.isArray(req.body.bets) && req.body.bets.length > 0) {
+      gamesToCheck = req.body.bets.map((b) => b.gameId);
+    } else if (req.body.gameId) {
+      gamesToCheck = [req.body.gameId];
     } else if (req.params.name) {
-      game = await Game.findOne({
+      const game = await Game.findOne({
         name: new RegExp(`^${req.params.name}$`, "i"),
       });
+      if (!game) return res.status(404).json({ error: "Game not found" });
+      gamesToCheck = [game._id];
     }
 
-    if (!game) {
-      return res.status(404).json({ error: "Game not found" });
+    const restrictedGames = [];
+
+    for (const gameId of gamesToCheck) {
+      const game = await Game.findById(gameId);
+      if (!game) return res.status(404).json({ error: `Game not found: ${gameId}` });
+
+      const restrictionMsg = checkGameRestriction(game);
+      if (restrictionMsg) {
+        restrictedGames.push({ gameId, message: restrictionMsg });
+      }
     }
 
-    // Extract times as minutes
-    const nowMinutes = toMinutes(new Date());
-    const openMinutes = toMinutes(new Date(game.openingTime));
-    const closeMinutes = toMinutes(new Date(game.closingTime));
-
-    // Betting closed after closeTime daily
-    let isClosed;
-    if (openMinutes < closeMinutes) {
-      // normal case
-      isClosed = nowMinutes >= closeMinutes;
-    } else {
-      // overnight case
-      isClosed = !inWindow(nowMinutes, openMinutes, closeMinutes);
-    }
-
-    if (isClosed) {
-      return res.status(400).json({ error: "Betting closed for this game" });
-    }
-
-    // Restriction window
-    if (isRestricted(game.openingTime, game.closingTime)) {
+    if (restrictedGames.length > 0) {
       return res.status(403).json({
-        error: "Betting disabled 15 min before/after results.",
+        error: "Some games cannot be bet on right now",
+        details: restrictedGames,
       });
     }
 
-    req.game = game;
     next();
   } catch (err) {
     console.error("Restriction check error:", err);
