@@ -25,6 +25,7 @@ export const AdminAuthProvider = ({ children }) => {
       throw err;
     }
   };
+  
 
   // ✅ Logout (send token header)
   const logout = async () => {
@@ -32,7 +33,7 @@ export const AdminAuthProvider = ({ children }) => {
     try {
       await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/admin/logout`,
-        {},
+        {withCredentials:true},
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         }
@@ -44,12 +45,14 @@ export const AdminAuthProvider = ({ children }) => {
     }
   };
 
+
   // ✅ Verify (check auth on refresh)
   const checkAuth = async () => {
     const token = localStorage.getItem("token");
     try {
       const res = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/admin/verify`,
+        {withCredentials:true},
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         }
