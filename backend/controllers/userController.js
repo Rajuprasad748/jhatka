@@ -5,7 +5,7 @@ import { GenerateToken } from "../services/user.services.js";
 
 export const registerUser = async (req, res) => {
   try {
-    const { name, mobile, email, password } = req.body;
+    const { name, mobile , password } = req.body;
 
     // 1. Validate input
     if (!name || !mobile || !password) {
@@ -111,14 +111,23 @@ export const logoutUser = (req, res) => {
 };
 
 export const verifyUser = (req, res) => {
-  res.json({ isLoggedIn: true, user: req.user });
+  const user = req.user;
+  if(!user){
+    return res.status(404).json({ isLoggedIn: false , message:"Something went wrong, Login again"});
+  }
+  res.status(200).json({ isLoggedIn: true, user });
 };
 
 export const getTokenHistory = async (req, res) => {
   try {
+
     const userId = req.user._id;
+    if(!userId) return res.status(404).json({ message: "Something went wrong, User not found" });
+
     const history = await Token.find({ userId }).sort({ createdAt: -1 });
-    res.json(history);
+    if(!history) return res.status(404).json({ message: "Something went wrong" });
+    
+    res.status(200).json(history);
   } catch (error) {
     console.error("Error fetching token history:", error);
     res.status(500).json({ message: "Server error" });

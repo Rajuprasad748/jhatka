@@ -16,6 +16,14 @@ export const getContactInfo = async (req, res) => {
 export const updateContactField = async (req, res) => {
   try {
     const { field, value } = req.body;
+    const admin = req.admin;
+
+    const allowedRoles = ["superAdmin"];
+    if (!allowedRoles.includes(admin.role)) {
+      return res
+        .status(403)
+        .json({ message: "You do not have permission" });
+    }
 
     const allowedFields = ["contactNumber", "email", "telegram", "instagram" , "marquee"];
     if (!allowedFields.includes(field)) {

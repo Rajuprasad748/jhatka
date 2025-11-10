@@ -4,6 +4,7 @@ import Admin from "../models/admin.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import { sendEmail } from "../config/mailer.js";
 
 
 export const allUsers = async (req, res) => {
@@ -14,6 +15,27 @@ export const allUsers = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const sendOtpToAdmin = async (req, res) => {
+  const {email} = req.body;
+  if(!email){
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  try {
+    // Generate a 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const response = await sendEmail(email, otp);
+
+    if(response){
+      return res.status(200).json({ message: "OTP sent successfully", otp });
+    }
+
+    return res.status(500).json({ message: "Failed to send OTP" });
+    } catch(err){
+      res.status(500).json({ message: "Error sending OTP" });
+    }
+}
 
 
 export const adminLogout = async (req, res) => {
@@ -26,14 +48,39 @@ export const adminLogout = async (req, res) => {
 };
 
 
+export const resetAdminPassword = async (req, res) => {
+  const { email, password } = req.body;
+
+  if(!email || !password) {
+    return  res.status(400).json({ message: "Email and new password are required" });
+  }
+
+  try {
+    const admin = await Admin.findOne({ email });
+    if (!admin) return res.status(400).json({ message: "Admin not found" });
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    admin.password = await bcrypt.hash(password, salt);
+    await admin.save();
+
+    res.status(200).json({ message: "Password reset successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
 export const adminLogin = async (req, res) => {
   try {
     const { mobile, password } = req.body;
 
+    if (!mobile || !password) {
+      return res.status(400).json({ message: "Please provide mobile and password" });
+    }
+
     const admin = await Admin.findOne({ mobile });
     if (!admin) return res.status(400).json({ message: "Admin not found" });
-    console.log(admin);
 
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
@@ -66,7 +113,13 @@ export const adminLogin = async (req, res) => {
 export const verifyAdmin = async (req, res) => {
   try {
     const adminId = req.admin.id;
+
+    if(!adminId){
+      return res.status(404).json({ message: "Admin in req not found" });
+    }
+
     const admin = await Admin.findById(adminId).select("-password");
+
     if (!admin) return res.status(404).json({ message: "Admin not found" });
     res.status(200).json({ admin });
   } catch (error) {
@@ -118,7 +171,7 @@ export const runQuery = async (req, res) => {
       data = await col.find(query).limit(200).toArray();
     }
 
-    res.json(data);
+    res.status(200).json(data);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || "Server error" });

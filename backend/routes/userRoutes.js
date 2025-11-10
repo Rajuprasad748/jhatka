@@ -9,20 +9,25 @@ import { getWalletHistory } from '../controllers/walletController.js';
 
 const router = express.Router();
 
-
-router.get('/verify', authMiddleware , verifyUser);
+//Those routes are without middleware no authentication
 router.get("/games", getAllGames);
-router.get("/tokenHistory", authMiddleware, getTokenHistory);
-router.get("/walletHistory", authMiddleware, getWalletHistory);
 router.get("/contactInfo", getContactInfo);
-router.get("/betHistory", authMiddleware, getBetHistory);
 router.get("/getResultDatewise", getResultsDatewise);
-
-
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post('/logout', logoutUser);
-router.post("/place-bets", authMiddleware, restrictBetting, placeBets);
+
+//Those routes are protected and need authentication
+
+router.use(authMiddleware);
+
+router.get("/betHistory", getBetHistory);
+router.get('/verify' , verifyUser);
+router.get("/tokenHistory", getTokenHistory);
+router.get("/walletHistory", getWalletHistory);
+
+
+router.post("/place-bets", restrictBetting, placeBets);
 
 export default router;

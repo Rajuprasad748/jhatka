@@ -34,6 +34,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
+app.get("/pingHealth", (req, res) => {
+  res.status(200).send("OK");
+});
+
+
 // Routes (e.g., /api/users)
 app.use("/users", userRoutes);
 app.use("/admin" ,  adminRoutes);

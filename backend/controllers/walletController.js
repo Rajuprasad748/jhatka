@@ -5,11 +5,10 @@ import Bet from "../models/placeBet.js";
 
 export const getAllTokens = async (req, res) => {
   try {
-    
-    const tokens = await Token.find() // only add tokens
-      .populate("userId", "name mobile") // get username + mobile
-      .sort({ time: -1 });
-    res.json(tokens);
+    const tokens = await Token.find().populate("userId", "name mobile").sort({ time: -1 });
+    if(!tokens) return res.status(404).json({message : "tokens not found, try again later"});
+
+    res.status(200).json(tokens);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -17,9 +16,9 @@ export const getAllTokens = async (req, res) => {
 
 // Add tokens to wallet
 export const addTokens = async (req, res) => {
-  const { mobile } = req.params;
-
+  
   try {
+    const { mobile } = req.params;
     const { tokens, remark } = req.body;
     const admin = req.admin;
 
@@ -29,6 +28,7 @@ export const addTokens = async (req, res) => {
         .status(403)
         .json({ message: "You do not have permission to add tokens" });
     }
+
 
     if (!tokens || tokens <= 0) {
       return res
@@ -62,7 +62,7 @@ export const addTokens = async (req, res) => {
       { new: true }
     );
 
-    res.json(user);
+    res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -164,6 +164,7 @@ export const getAccountInfo = async (req, res) => {
       },
     ]);
 
+    if(!result) return res.status(404).json({message : "result not found , try again later"});
     res.status(200).json(result);
   } catch (error) {
     console.error(error);
@@ -175,11 +176,13 @@ export const getWalletHistory = async (req, res) => {
   try {
     const userId = req.user.id;
 
+    if(!userId) return res.status(404).json({message:"something went wrong"})
+
     // Example DB structure: each record has { userId, type, amount, message, date }
     const tokenHistory = await Token.find({ userId }).sort({ date: -1 });
     const winningHistory = await Bet.find({ user: userId }).sort({ date: -1 });
 
-    res.json({ success: true, tokenHistory, winningHistory });
+    res.status(200).json({ success: true, tokenHistory, winningHistory });
   } catch (err) {
     console.error("Error fetching wallet history:", err);
     res.status(500).json({ success: false, message: "Server error" });

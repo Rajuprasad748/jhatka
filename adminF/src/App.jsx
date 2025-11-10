@@ -20,6 +20,7 @@ import Account from './components/Account';
 import QueryWriter from './pages/QueryWriter';
 import UserBetRecord from './components/UserBetRecord';
 import BetRecall from './components/BetRecall';
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
     <Header />
       <Routes>
         <Route path="/login" element={<LoginForm />} />
+        <Route path="/forgotPassword" element={<ForgotPassword/>} />
       <Route element={<PrivateRoute />}>
         <Route path="/" element={<ADashboard />} />
         <Route path="/users" element={<AllPlayers/>} />

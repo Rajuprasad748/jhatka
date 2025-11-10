@@ -84,6 +84,10 @@ export const getBetHistory = async (req, res) => {
     // ✅ Fetch bets for the user
     const bets = await Bet.find({ user: userId }).populate("gameId", "name");
 
+    if(!bets){
+      return res.status(500).json({message:"bets not found"});
+    }
+
     res.status(200).json(bets);
   } catch (error) {
     console.error("Error fetching bet history:", error);
@@ -112,7 +116,11 @@ export const getUserBetHistory = async (req, res) => {
 
 export const getAllBets = async (req, res) => {
   try {
-    const bets = await Bet.find().populate("user", "mobile name").populate("gameId", "name").sort({ createdAt: -1 });;
+    const bets = await Bet.find().populate("user", "mobile name").populate("gameId", "name").sort({ createdAt: -1 });
+
+    if(!bets){
+      return res.status(404).json({message:"bets not found"});
+    }
     res.status(200).json(bets);
   } catch (error) {
     console.log(error.message);
@@ -124,6 +132,10 @@ export const recallResults = async (req , res) => {
   const { date, gameId, marketType } = req.body;
 
   const admin = req.admin;
+
+  if(!admin){
+    return res.status(404).json({message : "admin not found"})
+  }
 
     const allowedRoles = ["superAdmin"];
     if (!allowedRoles.includes(admin.role)) {

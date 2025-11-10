@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link , useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAdminAuth } from "../context/useAuth.js"; // ✅ admin context
 
@@ -65,6 +65,13 @@ const LoginForm = () => {
 
           {/* Error */}
           {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+
+          {/* Forgot Password Link */}
+          <div className="text-sm text-center">
+            <Link to="/forgotPassword" className="text-blue-600 hover:underline">
+              Forgot Password?
+            </Link>
+          </div>
 
           {/* Submit */}
           <button

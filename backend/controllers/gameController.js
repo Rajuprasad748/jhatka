@@ -74,6 +74,7 @@ function getTimeOnly(stored) {
       : !isNaN(new Date(stored))
       ? new Date(stored)
       : null;
+
   if (!date) return null;
 
   const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000); // Convert UTC → IST if needed
@@ -99,19 +100,26 @@ const normalizeAndConvertTime = (input) => {
 export const getAllGames = async (req, res) => {
   try {
     const games = await Game.find();
-    res.json(games);
+    if(!games) return res.status(404).json({message : "games not found , try after some time"})
+    res.status(200).json(games);
   } catch (error) {
     console.error("❌ Error fetching games:", error);
     res.status(500).json({ error: "Server error while fetching games" });
   }
 };
 
+
 export const getGame = async (req, res) => {
+
   const { id } = req.params;
+
+  if(!id) return res.status(500).json({ error: "something went wrong Id is missing" });
+
   try {
     const game = await Game.findById(id);
     if (!game) return res.status(404).json({ message: "Game not found" });
-    res.json(game);
+
+    res.status(200).json(game);
   } catch (error) {
     console.error("❌ Error fetching game:", error);
     res.status(500).json({ error: "Server error while fetching game" });
@@ -123,11 +131,14 @@ export const updateGameTime = async (req, res) => {
   const { selectedGameId } = req.params;
   let { openingTime, closingTime } = req.body;
 
+  if(!selectedGameId || !openingTime || !closingTime){
+    return res.status(404).json({ message: "Invalid or missing data" });
+  }
+
   try {
     const game = await Game.findById(selectedGameId);
     if (!game) return res.status(404).json({ message: "Game not found" });
 
-    console.log("objects of", openingTime, closingTime);
 
     if (openingTime) {
       game.openingTime = normalizeAndConvertTime(openingTime);
@@ -206,6 +217,10 @@ export const addGame = async (req, res) => {
 export const deleteGame = async (req, res) => {
   try {
     const admin = req.admin;
+    const { gameId } = req.params;
+
+    if(!admin) return res.status(404).json({ message: "Admin not found" });
+    if(!gameId) return res.status(404).json({ message: "game is not found" });
 
     const allowedRoles = ["superAdmin"];
     if (!allowedRoles.includes(admin.role)) {
@@ -213,9 +228,8 @@ export const deleteGame = async (req, res) => {
         .status(403)
         .json({ message: "You do not have permission to add tokens" });
     }
-    const { gameId } = req.params;
     await Game.findByIdAndDelete(gameId);
-    res.status(204).send();
+    res.status(204).json({message : "Game deleted Succesfully"});
   } catch (err) {
     console.error("Error deleting game:", err);
     res.status(500).json({ message: "Server error. Could not delete game." });
@@ -226,6 +240,10 @@ export const deleteGame = async (req, res) => {
 export const showGamesToUsers = async (req, res) => {
   try {
     const admin = req.admin;
+    const { toShow } = req.body;
+    const { selectedGame } = req.params;
+
+    if(!selectedGame) return res.status(403).json({ message: "Game is not selected" });
 
     const allowedRoles = ["superAdmin"];
     if (!allowedRoles.includes(admin.role)) {
@@ -234,8 +252,6 @@ export const showGamesToUsers = async (req, res) => {
         .json({ message: "You do not have permission to add tokens" });
     }
 
-    const { toShow } = req.body;
-    const { selectedGame } = req.params;
 
     if (typeof toShow !== "boolean") {
       return res.status(400).json({ error: "toShow must be a boolean" });
@@ -246,7 +262,7 @@ export const showGamesToUsers = async (req, res) => {
       { showToUsers: toShow },
       { new: true }
     );
-    res.json(updatedGame);
+    res.status(200).json(updatedGame);
   } catch (err) {
     console.error("Error updating game visibility:", err);
     res.status(500).json({ error: "Error updating game visibility" });
