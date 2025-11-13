@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
-import { Link , useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const ForgotPassword = () => {
   const [step, setStep] = useState("email"); // 'email' -> 'otp' -> 'reset'
@@ -10,11 +10,17 @@ const ForgotPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
 
+  // Loader state for each button
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
-  // ✅ Step 1: Send OTP to email
+  // ✅ Step 1: Send OTP
   const handleSendOtp = async () => {
     if (!email) return setMessage("Please enter your email");
+
+    setLoading(true);
+    setMessage("");
 
     try {
       const res = await axios.post(
@@ -22,17 +28,19 @@ const ForgotPassword = () => {
         { email }
       );
       setMessage(res.data.message || "OTP sent successfully!");
-
-      sessionStorage.setItem("otp", res.data.otp); // only for demo — in real backend you won’t store OTP on client
+      sessionStorage.setItem("otp", res.data.otp); // demo only
       setStep("otp");
     } catch (err) {
       setMessage(err.response?.data?.message || "Error sending OTP");
+    } finally {
+      setLoading(false);
     }
   };
 
   // ✅ Step 2: Verify OTP
   const handleVerifyOtp = () => {
-    const serverOtp = sessionStorage.getItem("otp"); // only for demo
+    setMessage("");
+    const serverOtp = sessionStorage.getItem("otp"); // demo only
     if (otp === serverOtp) {
       setMessage("OTP verified successfully!");
       setStep("reset");
@@ -41,26 +49,31 @@ const ForgotPassword = () => {
     }
   };
 
-  // ✅ Step 3: Update Password
+  // ✅ Step 3: Reset Password
   const handleResetPassword = async () => {
+    if (password.length < 8) {
+      return setMessage("Password must be at least 8 characters long");
+    }
     if (password !== confirmPassword) {
       return setMessage("Passwords do not match");
     }
 
+    setLoading(true);
+    setMessage("");
+
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/admin/reset-password`,
-        {
-          email,
-          password,
-        }
+        { email, password }
       );
       setMessage(res.data.message || "Password updated successfully!");
       sessionStorage.removeItem("otp");
-      navigate("/login");
       setStep("done");
+      navigate("/login");
     } catch (err) {
       setMessage(err.response?.data?.message || "Error updating password");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,9 +101,12 @@ const ForgotPassword = () => {
             />
             <button
               onClick={handleSendOtp}
-              className="bg-blue-600 text-white py-2 px-4 w-full rounded hover:bg-blue-700"
+              disabled={loading}
+              className={`${
+                loading ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
+              } text-white py-2 px-4 w-full rounded`}
             >
-              Send OTP
+              {loading ? "Sending..." : "Send OTP"}
             </button>
           </>
         )}
@@ -107,9 +123,21 @@ const ForgotPassword = () => {
             />
             <button
               onClick={handleVerifyOtp}
-              className="bg-green-600 text-white py-2 px-4 w-full rounded hover:bg-green-700"
+              disabled={loading}
+              className={`${
+                loading ? "bg-green-400" : "bg-green-600 hover:bg-green-700"
+              } text-white py-2 px-4 w-full rounded`}
             >
-              Verify OTP
+              {loading ? "Verifying..." : "Verify OTP"}
+            </button>
+
+            {/* Resend OTP */}
+            <button
+              onClick={handleSendOtp}
+              disabled={loading}
+              className="text-blue-600 mt-3 text-sm underline"
+            >
+              {loading ? "Resending..." : "Resend OTP"}
             </button>
           </>
         )}
@@ -133,9 +161,12 @@ const ForgotPassword = () => {
             />
             <button
               onClick={handleResetPassword}
-              className="bg-purple-600 text-white py-2 px-4 w-full rounded hover:bg-purple-700"
+              disabled={loading}
+              className={`${
+                loading ? "bg-purple-400" : "bg-purple-600 hover:bg-purple-700"
+              } text-white py-2 px-4 w-full rounded`}
             >
-              Update Password
+              {loading ? "Updating..." : "Update Password"}
             </button>
           </>
         )}
@@ -147,7 +178,7 @@ const ForgotPassword = () => {
         )}
 
         <div className="my-4 text-red-500 font-medium">
-          <p>📍Please Do not refresh the page or navigate away.</p>
+          <p>📍Please do not refresh the page or navigate away.</p>
         </div>
       </div>
     </div>

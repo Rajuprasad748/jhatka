@@ -10,7 +10,8 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = [`https://userfrontend-xnvv.onrender.com`, `https://royal10xadmin.onrender.com`, `http://localhost:5174`, `http://localhost:5173` , `https://royalmoney10x.online`];
+const allowedOrigins = [`https://userfrontend-xnvv.onrender.com`, `https://royal10xadmin.onrender.com`, 
+                        `http://localhost:5174`, `http://localhost:5173` , `https://royalmoney10x.online`];
 
 app.use(
   cors({
@@ -44,7 +45,7 @@ app.use("/users", userRoutes);
 app.use("/admin" ,  adminRoutes);
 
 const PORT = process.env.PORT || 5000;
-connectDB().then(() => {
+connectDB().th.en(() => {
   app.listen(PORT,"0.0.0.0", () => {
     console.log(`🚀 Server running on port ${PORT}`);
     

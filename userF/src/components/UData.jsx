@@ -57,9 +57,12 @@ const UData = () => {
     try {
       const { data } = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/users/games`,
-        { withCredentials: true , headers: {
-      Authorization: `Bearer ${token}`, // 🔥 sending manually
-    }, }
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`, // 🔥 sending manually
+          },
+        }
       );
 
       const filtered = data.filter((g) => g.showToUsers);
@@ -90,6 +93,43 @@ const UData = () => {
     const interval = setInterval(fetchGames, 15000);
     return () => clearInterval(interval);
   }, [fetchGames]);
+
+  // place this outside the component or in utils
+  const shouldHideResult = (openingTime, closingTime) => {
+  const now = new Date();
+
+  // Convert to hours + minutes (total minutes since midnight)
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const open = new Date(openingTime);
+  const close = new Date(closingTime);
+  const openMinutes = open.getHours() * 60 + open.getMinutes();
+  const closeMinutes = close.getHours() * 60 + close.getMinutes();
+
+  // Convert 6 hours and 7 hours to minutes
+  const openHideStart = openMinutes - 4 * 60;
+  const closeHideStart = closeMinutes - 4 * 60;
+
+  // Normalize if negative (e.g., hide window crosses midnight)
+  const normalize = (m) => (m < 0 ? 1440 + m : m); // 1440 = total minutes in a day
+  const openStart = normalize(openHideStart);
+  const closeStart = normalize(closeHideStart);
+
+  // 🔹 Check if "now" falls in the open or close hidden window
+  const inOpenWindow =
+    openStart < openMinutes
+      ? nowMinutes >= openStart && nowMinutes < openMinutes
+      : nowMinutes >= openStart || nowMinutes < openMinutes;
+
+  const inCloseWindow =
+    closeStart < closeMinutes
+      ? nowMinutes >= closeStart && nowMinutes < closeMinutes
+      : nowMinutes >= closeStart || nowMinutes < closeMinutes;
+
+  return inOpenWindow || inCloseWindow;
+};
+
+
 
   // Helper: last digit of sum
   const getLastDigitOfSum = (digits) => {
@@ -152,13 +192,11 @@ const UData = () => {
         ) : (
           <div className="text-center bg-red-600 text-white py-3 px-4 rounded-lg text-base sm:text-lg">
             Royalmoney10x में आपका स्वागत है – आपकी सबसे भरोसेमंद मंज़िल, जहाँ
-            आपको मिलते हैं सटीक परिणाम।
-            हम आपको रीयल-टाइम अपडेट और आसान इंटरफ़ेस प्रदान
-            करते हैं ताकि आप हमेशा सही और आत्मविश्वास से भरे निर्णय ले सकें।
-            शुरुआती हों या अनुभवी, हर कोई Royalmoney10x पर भरोसा करता है,
-            क्योंकि यहाँ मिलती है पारदर्शिता, तेज़ अपडेट और भरोसेमंद अनुभव।
-            आज ही जुड़ें और जीत की दिशा में पहला कदम बढ़ाएं!
-
+            आपको मिलते हैं सटीक परिणाम। हम आपको रीयल-टाइम अपडेट और आसान इंटरफ़ेस
+            प्रदान करते हैं ताकि आप हमेशा सही और आत्मविश्वास से भरे निर्णय ले
+            सकें। शुरुआती हों या अनुभवी, हर कोई Royalmoney10x पर भरोसा करता है,
+            क्योंकि यहाँ मिलती है पारदर्शिता, तेज़ अपडेट और भरोसेमंद अनुभव। आज
+            ही जुड़ें और जीत की दिशा में पहला कदम बढ़ाएं!
             {/* <Link
               to="/personalGame"
               className="hover:underline animate-blink"
@@ -229,7 +267,9 @@ const UData = () => {
                   <div className="flex-1 text-center">
                     <p className="text-sm sm:text-lg font-semibold">{name}</p>
                     <p className="text-yellow-400 text-base sm:text-lg">
-                      {openDigitsStr}-{midDigits}-{closeDigitsStr}
+                      {shouldHideResult(openingTime, closingTime)
+                        ? "xxx-XX-xxx"
+                        : `${openDigitsStr}-${midDigits}-${closeDigitsStr}`}
                     </p>
                   </div>
 
