@@ -8,7 +8,7 @@ const gameSchema = new mongoose.Schema({
   closeDigits: { type: [Number], required: true },
   showToUsers: { type: Boolean, default: true },
   isPersonal: { type: Boolean, default: false },
-});
+}, { timestamps: true });
 
 const Game = mongoose.model("Game", gameSchema);
 export default Game;
