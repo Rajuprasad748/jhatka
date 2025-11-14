@@ -35,9 +35,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-app.get("/pingHealth", (req, res) => {
-  res.status(200).send("OK");
-});
 
 
 // Routes (e.g., /api/users)
@@ -50,6 +47,10 @@ connectDB().then(() => {
     console.log(`🚀 Server running on port ${PORT}`);
     
   });
+});
+
+app.get("/pingHealth", (req, res) => {
+  res.status(200).send("OK");
 });
 
 app.get("/", (req, res) => {
