@@ -339,11 +339,11 @@ export const setAndProcessResult = async (req, res) => {
 
     // ✅ Update game
     if (type === "open") {
-      await Game.findByIdAndUpdate(gameId, { openDigits: digits }, { session });
+      await Game.findByIdAndUpdate(gameId, { openDigits: digits , openUpdatedAt: new Date()}, { session });
     } else {
       await Game.findByIdAndUpdate(
         gameId,
-        { closeDigits: digits },
+        { closeDigits: digits , closeUpdatedAt : new Date() },
         { session }
       );
     }
@@ -464,7 +464,6 @@ export const setAndProcessResult = async (req, res) => {
         if (betDigitsStr === openStr + closeStr) isWinner = true;
       }
 
-      console.log("object of settlement of bet");
 
       // ✅ Settlement
       if (isWinner) {

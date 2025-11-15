@@ -4,9 +4,9 @@ import axios from "axios";
 import { AiFillHeart } from "react-icons/ai";
 import { GiAmphora } from "react-icons/gi";
 import { BiRefresh } from "react-icons/bi";
-import { CiPause1 } from "react-icons/ci";
-import { CiPlay1 } from "react-icons/ci";
+import { CiPause1, CiPlay1 } from "react-icons/ci";
 import { MdDateRange } from "react-icons/md";
+
 // 🔹 Skeleton for banner
 const BannerSkeleton = () => (
   <div className="animate-pulse">
@@ -59,14 +59,11 @@ const UData = () => {
         `${import.meta.env.VITE_API_BASE_URL}/users/games`,
         {
           withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${token}`, // 🔥 sending manually
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       const filtered = data.filter((g) => g.showToUsers);
-
       const sorted = [...filtered].sort(
         (a, b) => new Date(a.openingTime) - new Date(b.openingTime)
       );
@@ -94,42 +91,36 @@ const UData = () => {
     return () => clearInterval(interval);
   }, [fetchGames]);
 
-  // place this outside the component or in utils
-  const shouldHideResult = (openingTime, closingTime) => {
-  const now = new Date();
+  // 🔹 Helpers
 
-  // Convert to hours + minutes (total minutes since midnight)
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const isUpdatedToday = (date) => {
+    if (!date) return false;
+    const d = new Date(date);
+    const now = new Date();
+    return (
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate()
+    );
+  };
 
-  const open = new Date(openingTime);
-  const close = new Date(closingTime);
-  const openMinutes = open.getHours() * 60 + open.getMinutes();
-  const closeMinutes = close.getHours() * 60 + close.getMinutes();
+  // Hide logic for opening digits
+  const shouldHideOpeningResult = (openingTime, openUpdatedAt) => {
+    const now = new Date();
+    const open = new Date(openingTime);
+    const hideStart = new Date(open.getTime() - 6 * 60 * 60 * 1000); // 6h before
 
-  // Convert 6 hours and 7 hours to minutes
-  const openHideStart = openMinutes - 4 * 60;
-  const closeHideStart = closeMinutes - 4 * 60;
+    return now < hideStart || !isUpdatedToday(openUpdatedAt);
+  };
 
-  // Normalize if negative (e.g., hide window crosses midnight)
-  const normalize = (m) => (m < 0 ? 1440 + m : m); // 1440 = total minutes in a day
-  const openStart = normalize(openHideStart);
-  const closeStart = normalize(closeHideStart);
+  // Hide logic for closing digits
+  const shouldHideClosingResult = (closingTime, closeUpdatedAt) => {
+    const now = new Date();
+    const close = new Date(closingTime);
+    const hideStart = new Date(close.getTime() - 6 * 60 * 60 * 1000);
 
-  // 🔹 Check if "now" falls in the open or close hidden window
-  const inOpenWindow =
-    openStart < openMinutes
-      ? nowMinutes >= openStart && nowMinutes < openMinutes
-      : nowMinutes >= openStart || nowMinutes < openMinutes;
-
-  const inCloseWindow =
-    closeStart < closeMinutes
-      ? nowMinutes >= closeStart && nowMinutes < closeMinutes
-      : nowMinutes >= closeStart || nowMinutes < closeMinutes;
-
-  return inOpenWindow || inCloseWindow;
-};
-
-
+    return now < hideStart || !isUpdatedToday(closeUpdatedAt);
+  };
 
   // Helper: last digit of sum
   const getLastDigitOfSum = (digits) => {
@@ -141,33 +132,32 @@ const UData = () => {
   // Determine game status
   const getGameStatus = (openingTime, closingTime) => {
     const now = new Date();
-
-    // convert current time to minutes in the day
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
-
-    // parse input times
     const open = new Date(openingTime);
     const close = new Date(closingTime);
-
     const openMinutes = open.getHours() * 60 + open.getMinutes();
     const closeMinutes = close.getHours() * 60 + close.getMinutes();
 
     if (closeMinutes > openMinutes) {
-      // ✅ Normal case: open & close on the same day
       if (nowMinutes < openMinutes) return "beforeOpen";
-      if (nowMinutes >= openMinutes && nowMinutes < closeMinutes)
-        return "afterOpen";
+      if (nowMinutes >= openMinutes && nowMinutes < closeMinutes) return "afterOpen";
       return "closed";
     } else {
-      // ✅ Overnight case: e.g., open 23:30 → close 00:30
-      if (nowMinutes < openMinutes && nowMinutes >= closeMinutes) {
-        return "beforeOpen"; // still before opening tonight
-      }
-      if (nowMinutes >= openMinutes || nowMinutes < closeMinutes) {
-        return "afterOpen"; // we're in the overnight open window
-      }
+      if (nowMinutes < openMinutes && nowMinutes >= closeMinutes) return "beforeOpen";
+      if (nowMinutes >= openMinutes || nowMinutes < closeMinutes) return "afterOpen";
       return "closed";
     }
+  };
+
+  // Compute Jodi
+  const getJodiDisplay = (openDigits, closeDigits, openUpdatedAt, closeUpdatedAt, openingTime, closingTime) => {
+    const openDeclared = !shouldHideOpeningResult(openingTime, openUpdatedAt);
+    const closeDeclared = !shouldHideClosingResult(closingTime, closeUpdatedAt);
+
+    const openLast = openDeclared ? getLastDigitOfSum(openDigits) : "X";
+    const closeLast = closeDeclared ? getLastDigitOfSum(closeDigits) : "X";
+
+    return `${openLast}${closeLast}`;
   };
 
   return (
@@ -197,13 +187,6 @@ const UData = () => {
             सकें। शुरुआती हों या अनुभवी, हर कोई Royalmoney10x पर भरोसा करता है,
             क्योंकि यहाँ मिलती है पारदर्शिता, तेज़ अपडेट और भरोसेमंद अनुभव। आज
             ही जुड़ें और जीत की दिशा में पहला कदम बढ़ाएं!
-            {/* <Link
-              to="/personalGame"
-              className="hover:underline animate-blink"
-              state={{ personalGames: gameData.filter((g) => g.isPersonal) }}
-            >
-              To earn more, play this game. Click here
-            </Link> */}
           </div>
         )}
 
@@ -233,13 +216,19 @@ const UData = () => {
               closeDigits,
               openingTime,
               closingTime,
+              openUpdatedAt,
+              closeUpdatedAt
             } = item;
 
             const openDigitsStr = openDigits?.join("") || "";
             const closeDigitsStr = closeDigits?.join("") || "";
-            const midDigits =
-              getLastDigitOfSum(openDigits) + getLastDigitOfSum(closeDigits);
+            const midDigits = getJodiDisplay(openDigits, closeDigits, openUpdatedAt, closeUpdatedAt, openingTime, closingTime);
+
             const status = getGameStatus(openingTime, closingTime);
+
+            // Hide digits logic
+            const hideOpen = shouldHideOpeningResult(openingTime, openUpdatedAt);
+            const hideClose = shouldHideClosingResult(closingTime, closeUpdatedAt);
 
             return (
               <div
@@ -248,13 +237,12 @@ const UData = () => {
               >
                 {/* Time Row */}
                 <div className="text-xs sm:text-sm text-center text-gray-400">
-                  Open: {formatTime(openingTime)} | Close:{" "}
-                  {formatTime(closingTime)}
+                  Open: {formatTime(openingTime)} | Close: {formatTime(closingTime)}
                 </div>
 
                 {/* Game Info Row */}
                 <div className="flex items-center justify-between">
-                  {/* Left Icon → BetDigitHistory always available if logged in */}
+                  {/* Left Icon → BetDigitHistory */}
                   <Link
                     to={`/showBetDigitsHistory`}
                     state={{ game: item }}
@@ -267,9 +255,9 @@ const UData = () => {
                   <div className="flex-1 text-center">
                     <p className="text-sm sm:text-lg font-semibold">{name}</p>
                     <p className="text-yellow-400 text-base sm:text-lg">
-                      {shouldHideResult(openingTime, closingTime)
+                      {hideOpen && hideClose
                         ? "xxx-XX-xxx"
-                        : `${openDigitsStr}-${midDigits}-${closeDigitsStr}`}
+                        : `${hideOpen ? "xxx" : openDigitsStr}-${midDigits}-${hideClose ? "xxx" : closeDigitsStr}`}
                     </p>
                   </div>
 
