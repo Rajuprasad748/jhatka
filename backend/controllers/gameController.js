@@ -7,12 +7,12 @@ import User from "../models/User.js";
 
 const multipliers = {
   singleDigit: 10,
-  jodi: 100,
-  singlePana: 160,
-  doublePana: 320,
-  triplePana: 900,
-  halfSangam: 1500,
-  fullSangam: 10000,
+  jodi: 95,
+  singlePana: 150,
+  doublePana: 300,
+  triplePana: 860,
+  halfSangam: 1400,
+  fullSangam: 9000,
 };
 
 const convertToMongoDate = (timeString) => {
@@ -273,6 +273,10 @@ export const showGamesToUsers = async (req, res) => {
 export const setAndProcessResult = async (req, res) => {
   const admin = req.admin;
 
+  if(!admin) {
+    return res.status(403).json({ message: "Admin not found" });
+  }
+
   const allowedRoles = ["superAdmin", "betAdmin"];
   if (!allowedRoles.includes(admin.role)) {
     return res
@@ -308,13 +312,10 @@ export const setAndProcessResult = async (req, res) => {
 
     // ✅ Time checking
     const gameTime =
-      type === "open"
-        ? getTimeOnly(game.openingTime)
-        : getTimeOnly(game.closingTime);
+      type === "open" ? getTimeOnly(game.openingTime) : getTimeOnly(game.closingTime);
     const now = new Date();
-    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
-      now.getMinutes()
-    ).padStart(2, "0")}`;
+
+    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
     if (gameTime && currentTime !== gameTime) {
       console.warn(
@@ -368,6 +369,7 @@ export const setAndProcessResult = async (req, res) => {
 
     // ✅ Fetch pending bets
     const bets = await Bet.find({ gameId, status: "pending" }).session(session);
+
     if (!bets || bets.length === 0) {
       await session.commitTransaction();
       session.endSession();
@@ -470,10 +472,8 @@ export const setAndProcessResult = async (req, res) => {
         winningAmount =
           (Number(bet.points) || 0) * (multipliers[bet.betType] || 1);
         const userIdStr = String(bet.user);
-        userIncrements.set(
-          userIdStr,
-          (userIncrements.get(userIdStr) || 0) + winningAmount
-        );
+
+        userIncrements.set(userIdStr,(userIncrements.get(userIdStr) || 0) + winningAmount);
         bulkBetOps.push({
           updateOne: {
             filter: { _id: bet._id },
@@ -508,14 +508,10 @@ export const setAndProcessResult = async (req, res) => {
       if (bulkUserOps.length) await User.bulkWrite(bulkUserOps, { session });
     }
 
-    console.log("object of everythih=ng done");
 
     // ✅ Commit transaction
     await session.commitTransaction();
     session.endSession();
-
-    console.log("✅ Bets processed successfully");
-    console.log("object of the middle session");
 
     return res.json({
       message: `🎯 ${type.toUpperCase()} result declared and bets processed successfully`,

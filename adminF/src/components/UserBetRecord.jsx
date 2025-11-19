@@ -13,7 +13,8 @@ function UserBetRecord() {
     betType: "",
     startDate: "",
     endDate: "",
-    gameName: "", // Added Game Name filter
+    gameName: "",
+    mobile: "", // Added Mobile filter
   });
 
   const [gameNames, setGameNames] = useState([]); // Unique game names for dropdown
@@ -31,6 +32,7 @@ function UserBetRecord() {
           headers,
         }
       );
+      console.log(res.data);
       setBets(res.data);
       setFilteredBets(res.data);
 
@@ -81,6 +83,11 @@ function UserBetRecord() {
     if (filters.gameName)
       filtered = filtered.filter((b) => b.gameName === filters.gameName);
 
+    if (filters.mobile)
+      filtered = filtered.filter((b) =>
+        b.user?.mobile?.includes(filters.mobile)
+      );
+
     setFilteredBets(filtered);
   };
 
@@ -93,6 +100,7 @@ function UserBetRecord() {
       startDate: "",
       endDate: "",
       gameName: "",
+      mobile: "",
     });
     setFilteredBets(bets);
   };
@@ -103,7 +111,7 @@ function UserBetRecord() {
 
     filteredBets.forEach((bet) => {
       const dateKey = new Date(bet.date).toLocaleDateString("en-IN"); // group by date
-      const key = `${dateKey}_${bet.gameName}_${bet.betType}_${bet.marketType}_${bet.status}_${bet.digits}`;
+      const key = `${dateKey}_${bet.gameName}_${bet.betType}_${bet.marketType}_${bet.status}_${bet.digits}_${bet.user?._id}`;
 
       if (!grouped[key]) {
         grouped[key] = {
@@ -134,7 +142,7 @@ function UserBetRecord() {
       </h2>
 
       {/* Filters */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-7 gap-4 mb-4">
         <select
           name="marketType"
           value={filters.marketType}
@@ -187,6 +195,15 @@ function UserBetRecord() {
             </option>
           ))}
         </select>
+
+        <input
+          type="text"
+          name="mobile"
+          placeholder="Mobile Number"
+          value={filters.mobile}
+          onChange={handleFilterChange}
+          className="border p-2 rounded"
+        />
 
         <input
           type="date"
@@ -246,6 +263,8 @@ function UserBetRecord() {
             <thead className="bg-gray-100">
               <tr>
                 <th className="border px-3 py-2">Date</th>
+                <th className="border px-3 py-2">Name</th>
+                <th className="border px-3 py-2">Mobile</th>
                 <th className="border px-3 py-2">Game Name</th>
                 <th className="border px-3 py-2">Bet Type</th>
                 <th className="border px-3 py-2">Market</th>
@@ -273,6 +292,12 @@ function UserBetRecord() {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
+                    </td>
+                    <td className="border px-3 py-2">
+                      {bet.user?.name || "N/A"}
+                    </td>
+                    <td className="border px-3 py-2">
+                      {bet.user?.mobile || "N/A"}
                     </td>
                     <td className="border px-3 py-2">{bet.gameName}</td>
                     <td className="border px-3 py-2">{bet.betType}</td>
@@ -302,7 +327,7 @@ function UserBetRecord() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="9" className="text-center py-4 text-gray-500">
+                  <td colSpan="11" className="text-center py-4 text-gray-500">
                     No bets found
                   </td>
                 </tr>

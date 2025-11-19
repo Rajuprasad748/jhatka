@@ -91,36 +91,120 @@ const UData = () => {
     return () => clearInterval(interval);
   }, [fetchGames]);
 
-  // 🔹 Helpers
+ // 🔹 Helper: Check if a date is from today (in IST)
+const isToday = (dateStr) => {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  const now = new Date();
+  
+  // Convert both to IST date components
+  const dIST = new Date(d.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  const nowIST = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  
+  return (
+    dIST.getDate() === nowIST.getDate() &&
+    dIST.getMonth() === nowIST.getMonth() &&
+    dIST.getFullYear() === nowIST.getFullYear()
+  );
+};
 
-  const isUpdatedToday = (date) => {
-    if (!date) return false;
-    const d = new Date(date);
-    const now = new Date();
-    return (
-      d.getFullYear() === now.getFullYear() &&
-      d.getMonth() === now.getMonth() &&
-      d.getDate() === now.getDate()
-    );
-  };
+// 🔹 Hide logic for opening digits - TIMEZONE FIXED
+const shouldHideOpeningResult = (openingTime, openUpdatedAt) => {
+  // Convert all times to IST for comparison
+  const now = new Date();
+  const opening = new Date(openingTime);
+  
+  // Get IST time in minutes from midnight
+  const nowIST = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  const openingIST = new Date(opening.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  
+  const nowMinutes = nowIST.getHours() * 60 + nowIST.getMinutes();
+  const openMinutes = openingIST.getHours() * 60 + openingIST.getMinutes();
+  
+  const hideStartMinutes = openMinutes - (6 * 60); // 6 hours before
 
-  // Hide logic for opening digits
-  const shouldHideOpeningResult = (openingTime, openUpdatedAt) => {
-    const now = new Date();
-    const open = new Date(openingTime);
-    const hideStart = new Date(open.getTime() - 6 * 60 * 60 * 1000); // 6h before
+  // 1️⃣ Before blackout period (more than 6h before opening)
+  if (nowMinutes < hideStartMinutes) {
+    return false; // Show previous numbers from DB
+  }
 
-    return now < hideStart || !isUpdatedToday(openUpdatedAt);
-  };
+  // 2️⃣ During blackout period (within 6h before opening time)
+  if (nowMinutes >= hideStartMinutes && nowMinutes < openMinutes) {
+    return true; // Hide - show xxx
+  }
 
-  // Hide logic for closing digits
-  const shouldHideClosingResult = (closingTime, closeUpdatedAt) => {
-    const now = new Date();
-    const close = new Date(closingTime);
-    const hideStart = new Date(close.getTime() - 6 * 60 * 60 * 1000);
+  // 3️⃣ After opening time has passed
+  if (nowMinutes >= openMinutes) {
+    // Check if admin has updated TODAY
+    const updatedToday = isToday(openUpdatedAt);
+    
+    if (!updatedToday) {
+      return true; // Admin hasn't updated today → show xxx
+    }
+    
+    // Admin updated today - check if update happened after opening time
+    const updated = new Date(openUpdatedAt);
+    const updatedIST = new Date(updated.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    const updatedMinutes = updatedIST.getHours() * 60 + updatedIST.getMinutes();
+    
+    if (updatedMinutes >= openMinutes) {
+      return false; // Show new numbers
+    } else {
+      return true; // Update was before opening time → show xxx
+    }
+  }
 
-    return now < hideStart || !isUpdatedToday(closeUpdatedAt);
-  };
+  return true;
+};
+
+// 🔹 Hide logic for closing digits - TIMEZONE FIXED
+const shouldHideClosingResult = (closingTime, closeUpdatedAt) => {
+  // Convert all times to IST for comparison
+  const now = new Date();
+  const closing = new Date(closingTime);
+  
+  // Get IST time in minutes from midnight
+  const nowIST = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  const closingIST = new Date(closing.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  
+  const nowMinutes = nowIST.getHours() * 60 + nowIST.getMinutes();
+  const closeMinutes = closingIST.getHours() * 60 + closingIST.getMinutes();
+  
+  const hideStartMinutes = closeMinutes - (6 * 60); // 6 hours before
+
+  // 1️⃣ Before blackout period (more than 6h before closing)
+  if (nowMinutes < hideStartMinutes) {
+    return false; // Show previous numbers from DB
+  }
+
+  // 2️⃣ During blackout period (within 6h before closing time)
+  if (nowMinutes >= hideStartMinutes && nowMinutes < closeMinutes) {
+    return true; // Hide - show xxx
+  }
+
+  // 3️⃣ After closing time has passed
+  if (nowMinutes >= closeMinutes) {
+    // Check if admin has updated TODAY
+    const updatedToday = isToday(closeUpdatedAt);
+    
+    if (!updatedToday) {
+      return true; // Admin hasn't updated today → show xxx
+    }
+    
+    // Admin updated today - check if update happened after closing time
+    const updated = new Date(closeUpdatedAt);
+    const updatedIST = new Date(updated.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    const updatedMinutes = updatedIST.getHours() * 60 + updatedIST.getMinutes();
+    
+    if (updatedMinutes >= closeMinutes) {
+      return false; // Show new numbers
+    } else {
+      return true; // Update was before closing time → show xxx
+    }
+  }
+
+  return true;
+};
 
   // Helper: last digit of sum
   const getLastDigitOfSum = (digits) => {
