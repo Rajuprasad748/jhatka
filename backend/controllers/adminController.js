@@ -26,6 +26,14 @@ export const sendOtpToAdmin = async (req, res) => {
     return res.status(400).json({ message: "Email is required" });
   }
 
+  const isAdmin = await Admin.findOne({email});
+
+  console.log(isAdmin);
+
+  if(!isAdmin){
+    return res.status(404).json({ message: "Incorrect email" });
+  }
+
   try {
     // Generate a 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
