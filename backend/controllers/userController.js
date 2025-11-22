@@ -31,9 +31,8 @@ export const registerUser = async (req, res) => {
       password: hashedPassword,
     });
 
-    // 5. Generate token
-    const token = GenerateToken(user);
-
+    console.log("✅ New user registered:", user);
+    
     const firstToken = new Token({
       userId: user._id,
       amount: 49,
@@ -44,7 +43,6 @@ export const registerUser = async (req, res) => {
 
     // 6. Send response
     res.status(201).json({
-      token,
       user: {
         id: user._id,
         name: user.name,

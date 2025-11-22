@@ -25,8 +25,10 @@ export const authMiddleware = async (req, res, next) => {
 
     // ✅ Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
 
+    if(!decoded || !decoded.id) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
     // ✅ Attach user to request
     req.user = await User.findById(decoded.id).select("-password");
 

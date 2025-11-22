@@ -1,12 +1,12 @@
 function GameRates() {
   const rates = [
-    { name: "Single Digit", rate: "10-100" },
-    { name: "Jodi Digit", rate: "10-1000" },
-    { name: "Single Pana", rate: "10-1600" },
-    { name: "Double Pana", rate: "10-3200" },
-    { name: "Triple Pana", rate: "10-9000" },
-    { name: "Half Sangam", rate: "10-15000" },
-    { name: "Full Sangam", rate: "10-100000" },
+    { name: "Single Digit", rate: "10-950" },
+    { name: "Jodi Digit", rate: "10-900" },
+    { name: "Single Pana", rate: "10-1500" },
+    { name: "Double Pana", rate: "10-3000" },
+    { name: "Triple Pana", rate: "10-8000" },
+    { name: "Half Sangam", rate: "10-14000" },
+    { name: "Full Sangam", rate: "10-90000" },
   ]
 
   return (

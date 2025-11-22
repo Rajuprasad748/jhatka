@@ -10,6 +10,10 @@ import { sendEmail } from "../config/mailer.js";
 export const allUsers = async (req, res) => {
   try {
     const users = await findAllUsers();
+
+    if (!users) {
+      return res.status(404).json({ message: "No users found" });
+    }
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -92,6 +96,10 @@ export const adminLogin = async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    if(!token){
+      return res.status(500).json({ message: "Could not generate token || Something went wrong" });
+    };
+
     res.cookie("token", token, { 
       httpOnly: true ,
       maxAge: 24 * 60 * 60 * 1000 * 7, // 7 days
@@ -115,7 +123,7 @@ export const verifyAdmin = async (req, res) => {
     const adminId = req.admin.id;
 
     if(!adminId){
-      return res.status(404).json({ message: "Admin in req not found" });
+      return res.status(404).json({ message: "AdminID not found" });
     }
 
     const admin = await Admin.findById(adminId).select("-password");
@@ -129,9 +137,18 @@ export const verifyAdmin = async (req, res) => {
 
 export const getCollections = async (req, res) => {
   try {
+    
     const collections = await mongoose.connection.db.listCollections().toArray();
+    if(!collections){
+      return res.status(500).json({ message: "No collections found , try again later" });
+    };
+
     const names = collections.map((col) => col.name);
-    res.json(names);
+    if(!names){
+      return res.status(500).json({ message: "No collection names found , try again later" });
+    };
+
+    res.status(200).json(names);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to fetch collections" });

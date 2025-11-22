@@ -13,6 +13,10 @@ export const placeBets = async (req, res) => {
     }
 
     const userId = req.user.id;
+    if(!userId){
+      return res.status(404).json({ message: "UserID not found" });
+    };
+
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "Userrrr not found" });
 
@@ -106,6 +110,10 @@ export const getUserBetHistory = async (req, res) => {
 
     // ✅ Fetch bets for the user
     const bets = await Bet.find({ user: userId }).populate("gameId", "name");
+
+    if(!bets){
+      return res.status(500).json({message:"bets not found , something went wrong"});
+    }
 
     res.status(200).json(bets);
   } catch (error) {

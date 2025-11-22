@@ -6,11 +6,11 @@ import Bet from "../models/placeBet.js";
 import User from "../models/User.js";
 
 const multipliers = {
-  singleDigit: 10,
-  jodi: 95,
+  singleDigit: 9.5,
+  jodi: 90,
   singlePana: 150,
   doublePana: 300,
-  triplePana: 860,
+  triplePana: 800,
   halfSangam: 1400,
   fullSangam: 9000,
 };
@@ -110,9 +110,7 @@ export const getAllGames = async (req, res) => {
 
 
 export const getGame = async (req, res) => {
-
   const { id } = req.params;
-
   if(!id) return res.status(500).json({ error: "something went wrong Id is missing" });
 
   try {
@@ -163,6 +161,10 @@ export const updateGameTime = async (req, res) => {
 export const addGame = async (req, res) => {
   const admin = req.admin;
 
+  if(!admin) {
+    return res.status(403).json({ message: "Admin not found" });
+  }
+
   const allowedRoles = ["superAdmin"];
   if (!allowedRoles.includes(admin.role)) {
     return res
@@ -181,7 +183,7 @@ export const addGame = async (req, res) => {
       isPersonal,
     } = req.body;
 
-    if (!name || !openingTime || !closingTime || !openDigits || !closeDigits) {
+    if (!name || !openingTime || !closingTime || !openDigits || !closeDigits || showToUsers === undefined || isPersonal === undefined) {
       return res.status(400).json({ message: "All fields are required." });
     }
 
@@ -256,6 +258,10 @@ export const showGamesToUsers = async (req, res) => {
     if (typeof toShow !== "boolean") {
       return res.status(400).json({ error: "toShow must be a boolean" });
     }
+
+    if(!selectedGame){
+      return res.status(404).json({ error: "game not found" });
+    };
 
     const updatedGame = await Game.findByIdAndUpdate(
       selectedGame,

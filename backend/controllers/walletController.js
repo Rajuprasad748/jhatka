@@ -40,6 +40,10 @@ export const addTokens = async (req, res) => {
       return res.status(400).json({ message: "Remark is required" });
     }
 
+    if(!mobile){
+      return res.status(400).json({ message: "Mobile number is required" });
+    };
+
     const user = await User.findOne({ mobile });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -91,6 +95,9 @@ export const removeTokens = async (req, res) => {
 
     if (!remark) {
       return res.status(400).json({ message: "Remark is required" });
+    }
+    if(!mobile){
+      return res.status(400).json({ message: "Mobile number is required" });
     }
 
     const user = await User.findOne({ mobile });
@@ -181,6 +188,14 @@ export const getWalletHistory = async (req, res) => {
     // Example DB structure: each record has { userId, type, amount, message, date }
     const tokenHistory = await Token.find({ userId }).sort({ date: -1 });
     const winningHistory = await Bet.find({ user: userId }).sort({ date: -1 });
+
+    if(!tokenHistory) {
+      return res.status(404).json({ success: false, message: "history not found , try again later" });
+    }
+
+    if(!winningHistory) {
+      return res.status(404).json({ success: false, message: "history not found , something went wrong" });
+    }
 
     res.status(200).json({ success: true, tokenHistory, winningHistory });
   } catch (err) {

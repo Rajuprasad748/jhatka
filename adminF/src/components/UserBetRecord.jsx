@@ -32,7 +32,6 @@ function UserBetRecord() {
           headers,
         }
       );
-      console.log(res.data);
       setBets(res.data);
       setFilteredBets(res.data);
 

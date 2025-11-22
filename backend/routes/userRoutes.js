@@ -18,6 +18,9 @@ router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post('/logout', logoutUser);
 
+
+
+
 //Those routes are protected and need authentication
 
 router.use(authMiddleware);

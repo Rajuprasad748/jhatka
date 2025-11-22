@@ -27,14 +27,24 @@ export const findUserByMobile = async (req, res) => {
 export const findAllUsers = async (req, res) => {
   try {
     const users = await User.find({});
-    res.status(200).json(users);
+
+    if (!users) {
+      return res.status(404).json({ message: "No users found" });
+    };
+
+    return users;
   } catch (error) {
     res.status(500).json({ message: "Error fetching users" });
   }
 };
 
-export const GenerateToken = (user) => {
-  return jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+export const GenerateToken = async (user) => {
+  const token =  jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: "7d",
   });
+
+  if(!token){
+    return null;
+  }
+  return token;
 };
