@@ -72,10 +72,11 @@ export const loginUser = async (req, res) => {
     }
 
     // Generate JWT
-    const token = GenerateToken(user);
+    const token = await GenerateToken(user);
     if (!token) {
       return res.status(500).json({ message: "Token generation failed" });
-    }
+    };
+
 
     // Store token in cookie
     await res.cookie("token", token, {
