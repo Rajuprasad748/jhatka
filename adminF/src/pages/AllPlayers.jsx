@@ -19,7 +19,7 @@ const AllPlayers = () => {
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/admin/all-users`
         );
-        setUsers(res.data);
+        setUsers(res.data.users);
         setFilteredUsers(res.data);
       } catch (err) {
         console.error("Failed to fetch users:", err);

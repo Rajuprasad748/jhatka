@@ -32,7 +32,7 @@ export const findAllUsers = async (req, res) => {
       return res.status(404).json({ message: "No users found" });
     };
 
-    return users;
+    return res.status(200).json({users});
   } catch (error) {
     res.status(500).json({ message: "Error fetching users" });
   }
