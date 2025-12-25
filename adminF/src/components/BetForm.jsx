@@ -14,6 +14,10 @@ const BetForm = () => {
   useEffect(() => {
     const fetchGames = async () => {
       const token = localStorage.getItem("token");
+      if(!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      };
       try {
         setLoading(true);
         const res = await axios.get(

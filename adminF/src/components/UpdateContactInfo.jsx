@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 const AdminUpdateContact = () => {
   const [contactInfo, setContactInfo] = useState(null);
@@ -14,9 +15,19 @@ const AdminUpdateContact = () => {
   useEffect(() => {
     const fetchContactInfo = async () => {
       try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast.error("Authentication token not found. Please log in again.");
+          return;
+        }
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/admin/contactInfo`,
-          { withCredentials: true }
+          { withCredentials: true },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         setContactInfo(res.data[0]);
         setValue(res.data[0]?.[selectedField] || "");

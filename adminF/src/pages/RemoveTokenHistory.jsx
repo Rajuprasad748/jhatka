@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 const RemoveTokenHistory = () => {
   const [tokenHistory, setTokenHistory] = useState({});
@@ -12,8 +13,19 @@ const RemoveTokenHistory = () => {
 
   const fetchTokenHistory = async () => {
     try {
+      const token = localStorage.getItem("token");
+      if(!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      };
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/admin/tokenHistory`
+        `${import.meta.env.VITE_API_BASE_URL}/admin/tokenHistory`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
       );
       const tokens = res.data;
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 const TokenHistory = () => {
   const [tokenHistory, setTokenHistory] = useState({});
@@ -12,7 +13,19 @@ const TokenHistory = () => {
 
   const fetchTokenHistory = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/tokenHistory`);
+      const token = localStorage.getItem("token");
+      if(!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      };
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/admin/tokenHistory` , {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
+      );
       const addTokens = res.data;
 
       // Filter only "add" tokens
@@ -74,7 +87,10 @@ const TokenHistory = () => {
 
       {!loading &&
         Object.keys(tokenHistory).map((day) => (
-          <div key={day} className="mb-4 border rounded-lg shadow overflow-hidden">
+          <div
+            key={day}
+            className="mb-4 border rounded-lg shadow overflow-hidden"
+          >
             {/* Header */}
             <div
               className="p-3 bg-gray-100 cursor-pointer flex justify-between items-center hover:bg-gray-200 transition"

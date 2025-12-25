@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 const ABetHistory = () => {
   const [games, setGames] = useState([]);
@@ -9,8 +10,14 @@ const ABetHistory = () => {
 
   // Fetch all games on mount
   useEffect(() => {
+
     const fetchGames = async () => {
       try {
+        const token = localStorage.getItem("token");
+      if(!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      };
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`
         );
@@ -28,7 +35,14 @@ const ABetHistory = () => {
     setLoading(true);
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/admin/getResultDatewise?gameId=${game._id}`
+        `${import.meta.env.VITE_API_BASE_URL}/admin/getResultDatewise?gameId=${game._id}`,
+        {
+          withCredentials: true,
+        },{
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       );
       setResults(res.data);
     } catch (err) {

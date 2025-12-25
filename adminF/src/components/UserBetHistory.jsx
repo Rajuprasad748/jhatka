@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 const UserBetHistory = () => {
   const [bets, setBets] = useState([]);
@@ -12,6 +13,10 @@ const UserBetHistory = () => {
     const fetchBets = async () => {
       try {
         const token = localStorage.getItem("token");
+      if(!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      };
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/admin/userBetHistory?userId=${userId}`,
           {

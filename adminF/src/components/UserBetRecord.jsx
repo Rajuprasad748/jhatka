@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 function UserBetRecord() {
   const [bets, setBets] = useState([]);
@@ -24,6 +25,10 @@ function UserBetRecord() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
+      if(!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      };
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const res = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/admin/allBets`,

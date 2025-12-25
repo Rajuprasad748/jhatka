@@ -35,7 +35,12 @@ function Header() {
     const fetchAmount = async () => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/admin/contactInfo`
+          `${import.meta.env.VITE_API_BASE_URL}/admin/contactInfo` , {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              withCredentials: true              ,
+            },
+          }
         );
         setAmount(response.data[0].amount);
       } catch (error) {
@@ -44,7 +49,7 @@ function Header() {
     };
 
     fetchAmount();
-  }, [admin]);
+  }, [token]);
 
   const handleLogout = async () => {
     try {

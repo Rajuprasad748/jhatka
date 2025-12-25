@@ -52,19 +52,25 @@ const AddGame = () => {
     };
 
     const token = localStorage.getItem("token");
+    if(!token) {
+      toast.error("Authentication token not found. Please log in again.");
+      return;
+    }
 
     try {
       await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/admin/addGame`,
-        payload, {
-          withCredentials: true,headers: {
-      Authorization: `Bearer ${token}`, // 🔥 sending manually
-    },
+        payload,
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`, // 🔥 sending manually
+          },
         }
       );
       toast.success("Game added successfully!");
-      } catch (error) {
-        toast.error("Login failed. Please try again.");
+    } catch (error) {
+      toast.error("Login failed. Please try again.");
       console.error("Error submitting game:", error);
     }
   };

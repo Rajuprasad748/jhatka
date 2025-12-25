@@ -11,10 +11,13 @@ const Account = () => {
     const fetchTransactions = async () => {
       try {
         const token = localStorage.getItem("token");
+        if(!token) return;
+        
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/admin/account`,
           {
             headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true,
           }
         );
         setTransactions(res.data);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 const RemoveGame = () => {
   const [games, setGames] = useState([]);
@@ -14,9 +15,18 @@ const RemoveGame = () => {
       setLoading(true);
       setError("");
       try {
+        const token = localStorage.getItem("token");
+              if(!token) {
+                toast.error("Authentication token not found. Please log in again.");
+                return;
+              };
         const { data } = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`,
-          { withCredentials: true }
+          { withCredentials: true }, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         setGames(data);
       } catch (err) {
@@ -29,8 +39,6 @@ const RemoveGame = () => {
     fetchGames();
   }, []);
 
-
-
   const handleDelete = async () => {
     if (!selectedGame) return;
     const token = localStorage.getItem("token");
@@ -38,9 +46,10 @@ const RemoveGame = () => {
       await axios.delete(
         `${import.meta.env.VITE_API_BASE_URL}/admin/deleteGame/${selectedGame}`,
         {
-          withCredentials: true,headers: {
-      Authorization: `Bearer ${token}`, // 🔥 sending manually
-    },
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`, // 🔥 sending manually
+          },
         }
       );
       setGames(games.filter((g) => g._id !== selectedGame));

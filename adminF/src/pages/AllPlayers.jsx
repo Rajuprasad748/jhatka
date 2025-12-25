@@ -14,10 +14,17 @@ const AllPlayers = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
     const fetchUsers = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/admin/all-users`
+          `${import.meta.env.VITE_API_BASE_URL}/admin/all-users`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            withCredentials: true,
+          }
         );
         setUsers(res.data.users);
         setFilteredUsers(res.data);

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 const HideGames = () => {
   const [games, setGames] = useState([]);
@@ -11,13 +12,19 @@ const HideGames = () => {
   useEffect(() => {
     const fetchGames = async () => {
       const token = localStorage.getItem("token");
+      if(!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      };
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/admin/allGames` , {
-          withCredentials: true,headers: {
-      Authorization: `Bearer ${token}`, // 🔥 sending manually
-    },
-        }
+          `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`,
+          {
+            withCredentials: true,
+            headers: {
+              Authorization: `Bearer ${token}`, // 🔥 sending manually
+            },
+          }
         );
         setGames(res.data);
       } catch (err) {
@@ -33,8 +40,15 @@ const HideGames = () => {
 
     try {
       const res = await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/admin/games/${selectedGame}/showToUsers`,
-        { toShow }
+        `${
+          import.meta.env.VITE_API_BASE_URL
+        }/admin/games/${selectedGame}/showToUsers`,
+        { toShow },{
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // 🔥 sending manually
+          },
+        }
       );
 
       // update state locally
@@ -51,7 +65,9 @@ const HideGames = () => {
 
   return (
     <div className="flex flex-col items-center p-4 w-full max-w-2xl mx-auto">
-      <h2 className="text-lg font-bold mb-4 text-center">Manage Game Visibility</h2>
+      <h2 className="text-lg font-bold mb-4 text-center">
+        Manage Game Visibility
+      </h2>
 
       {/* Dropdown + Radio form */}
       <div className="w-full mb-6">

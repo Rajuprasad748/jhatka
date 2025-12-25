@@ -50,6 +50,10 @@ const RemoveToken = () => {
 
     setLoading(true);
     const token = localStorage.getItem("token");
+      if(!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      };
 
     try {
       const res = await axios.get(
@@ -90,7 +94,10 @@ const RemoveToken = () => {
     setLoading(true);
     setIsSubmitting(true);
     const token = localStorage.getItem("token");
-
+      if(!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      };
     try {
       const res = await axios.put(
         `${import.meta.env.VITE_API_BASE_URL}/admin/removeTokens/${mobile}`,

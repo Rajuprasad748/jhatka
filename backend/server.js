@@ -10,8 +10,7 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = [`https://userfrontend-xnvv.onrender.com`, `https://royal10xadmin.onrender.com`, 
-                         `https://royalmoney10x.online`];
+const allowedOrigins = JSON.parse(process.env.FRONTEND_URLS || "[]");
 
 app.use(
   cors({

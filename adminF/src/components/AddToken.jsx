@@ -90,6 +90,13 @@ const AddToken = () => {
     setIsSubmitting(true);
     const token = localStorage.getItem("token");
 
+    if(!token){
+      toast.error("Authentication token not found. Please log in again.");
+      setLoading(false);
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const res = await axios.put(
         `${import.meta.env.VITE_API_BASE_URL}/admin/addTokens/${mobile}`,

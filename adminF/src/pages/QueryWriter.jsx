@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-
+import { toast } from "react-hot-toast";
 const QueryWriter = () => {
   const [collections, setCollections] = useState([]);
   const [selectedCollection, setSelectedCollection] = useState("");
@@ -19,7 +19,8 @@ const QueryWriter = () => {
         const token = localStorage.getItem("token");
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/admin/collections`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
+          {withCredentials: true}
         );
         setCollections(res.data);
       } catch (err) {
@@ -41,6 +42,10 @@ const QueryWriter = () => {
 
     try {
       const token = localStorage.getItem("token");
+      if(!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      };
       const parsedInput = JSON.parse(input);
 
       const payload =
@@ -59,7 +64,9 @@ const QueryWriter = () => {
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/admin/query`,
         payload,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },{
+          withCredentials: true,
+        }
       );
       setResult(res.data);
     } catch (err) {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 // Reusable Time Selector for 24-hour format
 const TimeSelector = ({ label, value, onChange }) => (
@@ -53,9 +54,20 @@ const UpdateTime = () => {
 
   // Fetch all games
   const fetchGames = async () => {
+    const token = localStorage.getItem("token");
+    if(!token) {
+      setError("Authentication token not found. Please log in again.");
+      return;
+    }
     try {
       const { data } = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`
+        `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
       );
       setGames(data);
     } catch (err) {
@@ -68,10 +80,20 @@ const UpdateTime = () => {
   useEffect(() => {
     const fetchGameTimes = async () => {
       if (!selectedGame) return;
-
+      const token = localStorage.getItem("token");
+      if(!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      };
       try {
         const { data } = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/admin/games/${selectedGame}`
+          `${import.meta.env.VITE_API_BASE_URL}/admin/games/${selectedGame}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            withCredentials: true,
+          }
         );
 
         if (data.openingTime) {

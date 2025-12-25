@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const BetRecall = () => {
   const [date, setDate] = useState("");
@@ -11,10 +12,19 @@ const BetRecall = () => {
 
   // ✅ Fetch all games for dropdown
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Authentication token not found. Please log in again.");
+      return;
+    }
     const fetchGames = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`
+          `${import.meta.env.VITE_API_BASE_URL}/admin/allGames`, 
+          {
+            withCredentials: true,
+            headers: { Authorization: `Bearer ${token}` }, // 🔥 sending manually
+          }
         );
         setGameList(res.data || []);
       } catch (err) {
@@ -33,9 +43,18 @@ const BetRecall = () => {
     setMessage("");
 
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      }
       const res = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/admin/recallResult`,
-        { date, gameId, marketType }
+        { date, gameId, marketType },
+        {
+          withCredentials: true,
+          headers: { Authorization: `Bearer ${token}` }, // 🔥 sending manually
+        }
       );
 
       if (res.data.success) {
@@ -60,7 +79,9 @@ const BetRecall = () => {
       <div className="space-y-3">
         {/* Date Picker */}
         <div>
-          <label className="block text-gray-700 font-medium mb-1">Select Date</label>
+          <label className="block text-gray-700 font-medium mb-1">
+            Select Date
+          </label>
           <input
             type="date"
             value={date}
@@ -71,7 +92,9 @@ const BetRecall = () => {
 
         {/* Game Dropdown */}
         <div>
-          <label className="block text-gray-700 font-medium mb-1">Select Game</label>
+          <label className="block text-gray-700 font-medium mb-1">
+            Select Game
+          </label>
           <select
             value={gameId}
             onChange={(e) => setGameId(e.target.value)}
@@ -88,7 +111,9 @@ const BetRecall = () => {
 
         {/* Market Type Dropdown */}
         <div>
-          <label className="block text-gray-700 font-medium mb-1">Market Type</label>
+          <label className="block text-gray-700 font-medium mb-1">
+            Market Type
+          </label>
           <select
             value={marketType}
             onChange={(e) => setMarketType(e.target.value)}
