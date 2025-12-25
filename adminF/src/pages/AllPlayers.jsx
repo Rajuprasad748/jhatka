@@ -3,6 +3,7 @@ import axios from "axios";
 import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
 import { LuDownload } from "react-icons/lu";
+import { toast } from "react-toastify";
 
 const AllPlayers = () => {
   const [users, setUsers] = useState([]);
@@ -15,6 +16,10 @@ const AllPlayers = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+      if(!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      };
     const fetchUsers = async () => {
       try {
         const res = await axios.get(

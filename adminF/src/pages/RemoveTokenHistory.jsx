@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { toast } from "react-hot-toast";
-
+import { toast } from "react-toastify";
 const RemoveTokenHistory = () => {
   const [tokenHistory, setTokenHistory] = useState({});
   const [expandedDays, setExpandedDays] = useState({});

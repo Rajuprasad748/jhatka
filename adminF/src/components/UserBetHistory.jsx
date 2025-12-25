@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
-import { toast } from "react-hot-toast";
-
+import { toast } from "react-toastify";
 const UserBetHistory = () => {
   const [bets, setBets] = useState([]);
   const [loading, setLoading] = useState(true);

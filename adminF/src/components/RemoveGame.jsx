@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { toast } from "react-hot-toast";
-
+import { toast } from "react-toastify";
 const RemoveGame = () => {
   const [games, setGames] = useState([]);
   const [selectedGame, setSelectedGame] = useState("");
